@@ -1,0 +1,13 @@
+# Ignore sensitive files
+path/to/serviceAccountKey.json
+path/to/Screens/Register.py
+path/to/Screens/note.txt
+
+# Ignore compiled Python files
+*.pyc
+__pycache__/
+
+# Ignore other sensitive files
+*.env
+*.key
+*.pem
