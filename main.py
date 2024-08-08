@@ -14,8 +14,9 @@ from Screens.School.AdminPrincipal.Teacher.TeacherDetails import TeacherDetailsS
 from Screens.School.AdminPrincipal.Teacher.TeacherInfo import TeacherInfoScreen
 #school teacher
 from Screens.School.Teacher.SchoolTeacherScreen import SchoolTeacherScreen
-from Screens.School.Teacher.myAttendanceTech import myAttendanceTech
-from Screens.School.Teacher.FRSregisteration.FRSregister import RegisterWithFace
+from Screens.School.Teacher.myAttendanceTech.myAttendanceTech import myAttendanceTech
+from Screens.School.Teacher.myAttendanceTech.FRSregisteration.FRSregister import RegisterWithFace
+from Screens.School.Teacher.myAttendanceTech.FacialRecognition import FacialRecognition
 import os
 import firebase_admin
 from firebase_admin import credentials, initialize_app
@@ -59,6 +60,7 @@ class MainApp(MDApp):
         self.screen_manager.add_widget(SchoolTeacherScreen(name='school_teacher'))
         self.screen_manager.add_widget(myAttendanceTech(name='school_teacher_myAttendance'))
         self.screen_manager.add_widget(RegisterWithFace(name='school_teacher_frsRegister'))
+        self.screen_manager.add_widget(FacialRecognition(name='school_teacher_FacialRecognition'))
         return self.screen_manager
 
     def on_start(self):

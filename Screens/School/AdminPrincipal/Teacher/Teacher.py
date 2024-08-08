@@ -60,6 +60,7 @@ class TeacherScreen(MDScreen):
                     self.display_teachers(data)
             else:
                 print("Failed to fetch data from Firebase")
+                self.add_icon()
 
     def make_request(self, url, retries=3, delay=5):
         for attempt in range(retries):

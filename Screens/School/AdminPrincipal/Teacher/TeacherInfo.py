@@ -30,6 +30,7 @@ class TeacherInfoScreen(MDScreen):
             "TeacherName": ""
         }
         self.fields = {
+            "registration_status": False,
             "Gender": None,
             "Subject": None,
             "Qualification": None,
@@ -39,7 +40,7 @@ class TeacherInfoScreen(MDScreen):
             "Address": None,
             "City": None,
             "State": None,
-            "Zip Code": None
+            "Zip Code": None,
         }
 
         # Main layout

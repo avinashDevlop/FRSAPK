@@ -220,7 +220,7 @@ class AddTeacherScreen(MDScreen):
                     toast(f"{field_name} should be numeric.")
                     return
                 data[field_name] = field.text
-
+        data['registration_status'] = False
         self.send_to_firebase(data)
 
     def validate_email(self, email):
@@ -233,8 +233,7 @@ class AddTeacherScreen(MDScreen):
         school_name = self.DBLocation["schoolName"]
         type_of = self.DBLocation["typeOf"]
         teacherName = self.fields["Teacher Name"].text
-        url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{type_of}/{school_name}/Teachers/{teacherName}.json"  # Replace with your Firebase URL
-
+        url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{type_of}/{school_name}/Teachers/{teacherName}.json"
         response = requests.patch(url, json=data)  # Use patch instead of put
         if response.status_code == 200:
             toast("Data submitted successfully!")
@@ -259,11 +258,9 @@ class AddTeacherScreen(MDScreen):
             else:
                 field.text = ""
 
-
 class SchoolApp(MDApp):
     def build(self):
         return AddTeacherScreen()
-
 
 if __name__ == '__main__':
     SchoolApp().run()

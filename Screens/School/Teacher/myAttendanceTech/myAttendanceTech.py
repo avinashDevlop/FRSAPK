@@ -1,0 +1,252 @@
+import requests
+from kivy.core.image import Image as CoreImage
+from io import BytesIO
+from kivy.metrics import dp
+from kivy.uix.screenmanager import SlideTransition, ScreenManager
+from kivymd.app import MDApp
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.label import MDLabel
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.toolbar import MDTopAppBar
+from kivymd.uix.card import MDCard
+from kivy.graphics import Color, Ellipse
+from kivy.uix.widget import Widget
+from kivy.clock import Clock
+from kivy.network.urlrequest import UrlRequest
+from kivy.uix.scrollview import ScrollView
+import urllib.parse
+import random
+
+class CircularImage(Widget):
+    def __init__(self, source, **kwargs):
+        super(CircularImage, self).__init__(**kwargs)
+        self.source = source
+        self.texture = CoreImage(source).texture
+        self.size_hint = (None, None)
+        self.size = (dp(150), dp(150))
+        self.bind(pos=self.update_canvas, size=self.update_canvas)
+        self.update_canvas()
+
+    def update_canvas(self, *args):
+        self.canvas.clear()
+        with self.canvas:
+            Color(1, 1, 1, 1)
+            Ellipse(pos=self.pos, size=self.size, texture=self.texture)
+
+class myAttendanceTech(MDScreen):
+    def __init__(self, **kwargs):
+        super(myAttendanceTech, self).__init__(**kwargs)
+
+        self.fields = {
+            "schoolName": None,
+            "typeOf": None,
+            "role": None,
+            "userName": None
+        }
+
+        # Main layout
+        self.layout = MDBoxLayout(orientation='vertical', spacing=dp(10))
+
+        # Top app bar
+        self.top_bar = MDTopAppBar(
+            title="My Attendance",
+            left_action_items=[["arrow-left", lambda x: self.go_back()]],
+            pos_hint={"top": 1},
+        )
+        self.layout.add_widget(self.top_bar)
+
+        # Scrollable content
+        self.scroll_view = ScrollView()
+        self.scrollable_content = MDBoxLayout(orientation='vertical', spacing=dp(10), padding=dp(10), size_hint_y=None)
+        self.scrollable_content.bind(minimum_height=self.scrollable_content.setter('height'))
+        self.scroll_view.add_widget(self.scrollable_content)
+
+        # Top layout for profile card and register button
+        self.top_layout = MDBoxLayout(orientation='vertical', spacing=dp(10), padding=dp(10), size_hint_y=None)
+        self.top_layout.bind(minimum_height=self.top_layout.setter('height'))
+
+        # Profile image and name card
+        self.profile_card = MDCard(
+            size_hint=(None, None),
+            size=(dp(150), dp(200)),
+            pos_hint={'center_x': 0.5},
+            elevation=0,
+            orientation='vertical'
+        )
+
+        self.profile_image = CircularImage(
+            source='./assets/images/ImgSchool/FRSLogo.png',
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+
+        self.profile_card.add_widget(self.profile_image)
+
+        self.profile_label = MDLabel(
+            text='User',
+            halign='center'
+        )
+        self.profile_card.add_widget(self.profile_label)
+
+        self.top_layout.add_widget(self.profile_card)
+
+        # Register button
+        self.register_button = MDRaisedButton(
+            text="Register",
+            size_hint=(None, None),
+            size=(dp(100), dp(40)),
+            pos_hint={'center_x': 0.5},
+            on_release=self.register
+        )
+        self.top_layout.add_widget(self.register_button)
+
+        self.scrollable_content.add_widget(self.top_layout)
+
+        # Content layout
+        self.content_layout = MDBoxLayout(orientation='vertical', padding=dp(10), spacing=dp(20), size_hint_y=None)
+        self.content_layout.bind(minimum_height=self.content_layout.setter('height'))
+        self.scrollable_content.add_widget(self.content_layout)
+
+        self.layout.add_widget(self.scroll_view)
+
+        self.add_widget(self.layout)
+
+    def update_fields(self, school_name, type_of, role, username):
+        self.fields["typeOf"] = type_of
+        self.fields["schoolName"] = school_name
+        self.fields["role"] = role
+        self.fields["userName"] = username
+        self.update_profile_label()
+        self.update_title()
+        self.fetch_user_data()
+
+    def update_title(self):
+        if self.fields["userName"]:
+            self.top_bar.title = f"{self.fields['userName']}'s Attendance"
+        else:
+            self.top_bar.title = "My Attendance"
+
+    def update_profile_label(self):
+        if self.fields["userName"]:
+            self.profile_label.text = self.fields["userName"]
+        else:
+            self.profile_label.text = "User"
+
+    def fetch_user_data(self):
+        if all(self.fields.values()):
+            encoded_username = urllib.parse.quote(self.fields['userName'])
+            url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{self.fields['typeOf']}/{self.fields['schoolName']}/{self.fields['role']}s/{encoded_username}.json"
+
+            def on_success(req, result):
+                if result:
+                    if result.get('registration_status') == True:
+                        self.top_layout.remove_widget(self.register_button)
+                        self.update_profile_image()
+                        self.add_attendance_ui()
+                    self.update_ui_with_data(result)
+
+            def on_failure(req, result):
+                print(f"Failed to fetch user data: {result}")
+
+            def on_error(req, error):
+                print(f"Error fetching user data: {error}")
+
+            UrlRequest(url, on_success=on_success, on_failure=on_failure, on_error=on_error)
+
+    def update_ui_with_data(self, data):
+        if 'name' in data:
+            self.profile_label.text = data['name']
+        # Add more UI updates as needed
+
+    def update_profile_image(self):
+        encoded_username = urllib.parse.quote(self.fields['userName'])
+        image_url = f"https://storage.googleapis.com/facialrecognitiondb.appspot.com/{self.fields['typeOf']}/{self.fields['schoolName']}/{self.fields['role']}/{encoded_username}/face_registrationsIMG.png"
+
+        def load_image(dt):
+            try:
+                response = requests.get(image_url)
+                img_data = BytesIO(response.content)
+                img = CoreImage(img_data, ext="png", filename=image_url)
+
+                self.profile_image.texture = img.texture
+                self.profile_image.update_canvas()
+
+            except Exception as e:
+                print(f"Error loading image: {e}")
+
+        Clock.schedule_once(load_image)
+
+    def add_attendance_ui(self):
+        # Clear existing content
+        self.content_layout.clear_widgets()
+
+        # FRS button
+        frs_button = MDRaisedButton(
+            text="FRS",
+            size_hint=(None, None),
+            size=(dp(100), dp(40)),
+            pos_hint={'center_x': 0.5},
+            on_release=self.on_frs_press
+        )
+        self.content_layout.add_widget(frs_button)
+
+        # Attendance button
+        attendance_button = MDRaisedButton(
+            text="Attendance",
+            size_hint=(None, None),
+            size=(dp(120), dp(40)),
+            pos_hint={'center_x': 0.5},
+            on_release=self.on_attendance_press
+        )
+        self.content_layout.add_widget(attendance_button)
+
+        # Leave Letter button
+        leave_letter_button = MDRaisedButton(
+            text="Leave Letter",
+            size_hint=(None, None),
+            size=(dp(120), dp(40)),
+            pos_hint={'center_x': 0.5},
+            on_release=self.on_leave_letter_press
+        )
+        self.content_layout.add_widget(leave_letter_button)
+
+    def on_frs_press(self, instance):
+        screen = self.manager.get_screen('school_teacher_FacialRecognition')
+        screen.update_fields(self.fields["schoolName"], self.fields["typeOf"], self.fields["role"], self.fields["userName"])
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = 'school_teacher_FacialRecognition'
+
+    def on_attendance_press(self, instance):
+        print("Attendance button pressed")
+        # Add your Attendance functionality here
+
+    def on_leave_letter_press(self, instance):
+        print("Leave Letter button pressed")
+        # Add your Leave Letter functionality here
+
+    def go_back(self):
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = 'school_teacher'
+
+    def register(self, instance):
+        screen = self.manager.get_screen('school_teacher_frsRegister')
+        screen.update_fields(self.fields["schoolName"], self.fields["typeOf"], self.fields["role"],
+                             self.fields["userName"])
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = 'school_teacher_frsRegister'
+
+    def refresh_data(self):
+        self.fetch_user_data()
+
+    def on_enter(self):
+        self.refresh_data()
+
+class AttendanceApp(MDApp):
+    def build(self):
+        sm = ScreenManager()
+        sm.add_widget(myAttendanceTech(name='attendance'))
+        # Add other screens here if needed
+        return sm
+
+if __name__ == '__main__':
+    AttendanceApp().run()
