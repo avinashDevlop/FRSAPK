@@ -134,8 +134,12 @@ class myAttendanceTech(MDScreen):
 
     def fetch_user_data(self):
         if all(self.fields.values()):
+            encoded_school_name = urllib.parse.quote(self.fields['schoolName'])
+            encoded_type_of = urllib.parse.quote(self.fields['typeOf'])
+            encoded_role = urllib.parse.quote(self.fields['role'])
             encoded_username = urllib.parse.quote(self.fields['userName'])
-            url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{self.fields['typeOf']}/{self.fields['schoolName']}/{self.fields['role']}s/{encoded_username}.json"
+            
+            url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{encoded_type_of}/{encoded_school_name}/{encoded_role}s/{encoded_username}.json"
 
             def on_success(req, result):
                 if result:
@@ -149,7 +153,7 @@ class myAttendanceTech(MDScreen):
                 print(f"Failed to fetch user data: {result}")
 
             def on_error(req, error):
-                print(f"Error fetching user data: {error}")
+                print(f"Error fetching user data kk: {error}")
 
             UrlRequest(url, on_success=on_success, on_failure=on_failure, on_error=on_error)
 
