@@ -1,8 +1,3 @@
-import cv2
-import numpy as np
-import face_recognition
-import firebase_admin
-from firebase_admin import credentials, initialize_app, storage, db
 from kivy.uix.image import Image
 from kivy.graphics.texture import Texture
 from kivy.clock import Clock
@@ -15,18 +10,19 @@ from kivymd.uix.toolbar import MDTopAppBar
 from kivy.metrics import dp
 from kivy.uix.screenmanager import ScreenManager, SlideTransition
 from kivy.uix.camera import Camera
-from kivy.graphics import Color, Rectangle, Ellipse, Line, StencilPush, StencilUse, StencilPop, StencilUnUse
+from kivy.graphics import Color, Ellipse, Line, StencilPush, StencilUse, StencilPop, StencilUnUse, Rectangle
 from kivy.core.window import Window
+import face_recognition
+import firebase_admin
+from firebase_admin import credentials, initialize_app, storage, db
+import cv2
+import numpy as np
 from PIL import Image as PILImage
+import tensorflow as tf
 import os
-import tempfile
-import logging
 import requests
-import io
-
-# Setup logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from io import BytesIO
+from kivymd.toast import toast
 
 # Initialize Firebase
 service_account_key_path = os.path.join(os.getcwd(), "serviceAccountKey.json")
@@ -55,12 +51,16 @@ class CircularCamera(Camera):
             Ellipse(pos=self.pos, size=self.size)
             StencilUse()
             Color(1, 1, 1, 1)
-            Rectangle(texture=self.texture, pos=self.pos, size=self.size)
+            self._draw_texture_in_circle()
             StencilUnUse()
             StencilPop()
             Color(0, 0.7, 1, 1)
             border_width = dp(4)
             Line(circle=(self.center_x, self.center_y, min(self.width, self.height) / 2), width=border_width)
+
+    def _draw_texture_in_circle(self):
+        if self.texture:
+            Rectangle(texture=self.texture, pos=self.pos, size=self.size)
 
     def on_texture(self, *args):
         self._update_canvas()
@@ -68,10 +68,41 @@ class CircularCamera(Camera):
 class FacialRecognition(MDScreen):
     def __init__(self, **kwargs):
         super(FacialRecognition, self).__init__(**kwargs)
-        self.fields = {"SchoolName": None, "TypeOf": None, "role": None, "userName": None}
         self.camera = None
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        # self.model_path = '../myAttendanceTech/saved_model'
+
+        # self.model = self.load_model(self.model_path)
+        # if self.model:
+        #     self.infer = self.model.signatures['serving_default']
+        # else:
+        #     print("Failed to load the model.")
+
         self._setup_ui()
+
+    # def load_model(self, model_path):
+    #     try:
+    #         return tf.saved_model.load(model_path)
+    #     except Exception as e:
+    #         print(f"Error loading model: {str(e)}")
+    #         return None
+        
+    def get_available_tags(self, model_path):
+        try:
+            meta_graph_def = tf.saved_model.loader.load(model_path)
+            return meta_graph_def.tags
+        except Exception as e:
+            print(f"Error getting tags: {str(e)}")
+            return ['serve']
+
+    def update_fields(self, school_name, type_of, role, username):
+        self.fields = {
+            "SchoolName": school_name,
+            "TypeOf": type_of,
+            "role": role,
+            "userName": username,
+        }   
+        print(type_of, school_name,role,username)
 
     def _setup_ui(self):
         self.layout = MDBoxLayout(orientation='vertical', spacing=dp(10), padding=dp(20))
@@ -107,15 +138,6 @@ class FacialRecognition(MDScreen):
 
         self.add_widget(self.layout)
 
-    def update_fields(self, school_name, type_of, role, username):
-        self.fields = {
-            "SchoolName": school_name,
-            "TypeOf": type_of,
-            "role": role,
-            "userName": username,
-        }
-        logger.info(f"Fields updated: {self.fields}")
-
     def go_back(self):
         self.stop_camera()
         self.manager.transition = SlideTransition(direction="right")
@@ -143,30 +165,74 @@ class FacialRecognition(MDScreen):
         if self.camera and self.camera.texture:
             frame = self.get_frame()
             if frame is not None:
-                faces = self.face_cascade.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+                # Convert frame to grayscale for face detection
+                gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = self.face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
                 if len(faces) > 0:
+                    self.status_label.text = "Face detected. Checking conditions..."
+
+                    # Check if the face is centered
+                    for (x, y, w, h) in faces:
+                        face_center_x = x + w // 2
+                        face_center_y = y + h // 2
+                        frame_center_x = frame.shape[1] // 2
+                        frame_center_y = frame.shape[0] // 2
+
+                        # Allow some tolerance for centering
+                        tolerance = 50
+                        if abs(face_center_x - frame_center_x) > tolerance or abs(face_center_y - frame_center_y) > tolerance:
+                            self.status_label.text = (
+                                "Please adjust your position so your face is centered in the frame."
+                            )
+                            self.recognize_button.disabled = True
+                            self.recognize_button.md_bg_color = self.theme_cls.disabled_hint_text_color
+                            return
+
+                    # Check lighting conditions
+                    avg_brightness = np.mean(gray_frame)
+                    if avg_brightness < 50:
+                        self.status_label.text = (
+                            "Lighting is too dark. Please move to a brighter area or turn on a light."
+                        )
+                        self.recognize_button.disabled = True
+                        self.recognize_button.md_bg_color = self.theme_cls.disabled_hint_text_color
+                        return
+                    elif avg_brightness > 200:
+                        self.status_label.text = (
+                            "Lighting is too bright. Please reduce the lighting or move to a shaded area."
+                        )
+                        self.recognize_button.disabled = True
+                        self.recognize_button.md_bg_color = self.theme_cls.disabled_hint_text_color
+                        return
+
+                    # All conditions are good, enable recognition
                     self.status_label.text = "Face detected. You can now capture the image."
                     self.recognize_button.disabled = False
                     self.recognize_button.md_bg_color = self.theme_cls.primary_color
                 else:
-                    self.status_label.text = "No face detected. Please ensure your face is visible in the camera frame."
+                    self.status_label.text = (
+                        "No face detected. Please ensure your face is visible in the camera frame."
+                    )
                     self.recognize_button.disabled = True
                     self.recognize_button.md_bg_color = self.theme_cls.disabled_hint_text_color
 
+
     def get_frame(self):
         if not self.camera or not self.camera.texture:
-            logger.warning("Camera or texture not available")
             return None
-
         try:
             texture = self.camera.texture
             size = texture.size
             pixels = texture.pixels
-            pil_image = PILImage.frombytes(mode='RGBA', size=size, data=pixels)
+
+            mode = 'RGBA' if len(pixels) == size[0] * size[1] * 4 else 'RGB'
+            pil_image = PILImage.frombytes(mode=mode, size=size, data=pixels)
             opencv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGR)
+
             return opencv_image
         except Exception as e:
-            logger.error(f"Error getting frame from camera: {str(e)}")
+            print(f"Error getting frame from camera: {str(e)}")
             return None
 
     def on_enter(self):
@@ -175,45 +241,15 @@ class FacialRecognition(MDScreen):
     def on_leave(self):
         self.stop_camera()
 
-    def compare_faces(self, stored_img_url, live_img):
-        try:
-            response = requests.get(stored_img_url)
-            stored_image = PILImage.open(io.BytesIO(response.content))
-            logger.debug(f"Stored image mode before conversion: {stored_image.mode}")
-            if stored_image.mode != 'RGB':
-                stored_image = stored_image.convert('RGB')
-            stored_image = np.array(stored_image)
-            
-            live_img_rgb = cv2.cvtColor(live_img, cv2.COLOR_BGR2RGB)
-            
-            stored_encoding = face_recognition.face_encodings(stored_image)[0]
-            live_encoding = face_recognition.face_encodings(live_img_rgb)[0]
-            
-            results = face_recognition.compare_faces([stored_encoding], live_encoding)
-            return results[0]
-        except Exception as e:
-            logger.error(f"Error in face comparison: {str(e)}")
-            return False
-
     def perform_frs(self, instance):
-        frame = self.get_frame()
-        if frame is None:
-            self.status_label.text = "Failed to capture the frame from the camera. Please try again."
-            return
-
-        faces = self.face_cascade.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-        if len(faces) == 0:
-            self.status_label.text = "No face detected. Please try again."
-            return
-
-        self.stop_camera()
-
+        # Get user fields
         typeof = self.fields['TypeOf']
         schoolName = self.fields["SchoolName"]
         role = self.fields["role"]
         username = self.fields["userName"]
-        
+
         try:
+            # Access the image URL from the Firebase Realtime Database
             ref = db.reference(f'{typeof}/{schoolName}/{role}s/{username}')
             user_data = ref.get()
             if user_data is None:
@@ -222,26 +258,68 @@ class FacialRecognition(MDScreen):
             if stored_img_url is None:
                 raise ValueError("Image URL not found in user data")
 
-            match = self.compare_faces(stored_img_url, frame)
-            if match:
-                self.status_label.text = "FRS Successful!"
-                logger.info("FRS Successful!")
-                # Here you can add code to update attendance or perform other actions
-            else:
-                self.status_label.text = "Face does not match. Please try again."
-                logger.warning("Face does not match")
-        except Exception as e:
-            self.status_label.text = f"An error occurred: {str(e)}"
-            logger.error(f"Error in FRS process: {str(e)}")
-        finally:
-            self.start_camera()
+            # Download the image using the URL
+            response = requests.get(stored_img_url)
+            image_data = BytesIO(response.content)
+            stored_image = PILImage.open(image_data).convert('RGB')
 
-class FacialRecognitionApp(MDApp):
+            # Convert PIL Image to OpenCV format
+            opencv_image = cv2.cvtColor(np.array(stored_image), cv2.COLOR_RGB2BGR)
+
+            # Perform face recognition on the stored image
+            rgb_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
+            face_locations = face_recognition.face_locations(rgb_image)
+            if len(face_locations) == 0:
+                raise ValueError("No face found in the stored image")
+
+            stored_face_encoding = face_recognition.face_encodings(rgb_image, face_locations)[0]
+            
+            # Capture the current frame from the camera
+            current_frame = self.get_frame()
+            rgb_current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
+            current_face_locations = face_recognition.face_locations(rgb_current_frame)
+            if len(current_face_locations) == 0:
+                self.status_label.text = "No face detected in the current frame."
+                return
+
+            current_face_encoding = face_recognition.face_encodings(rgb_current_frame, current_face_locations)[0]
+            print('db ',stored_face_encoding)
+            print('live ',current_face_encoding)
+            # Compare the stored face encoding with the current face encoding
+            matches = face_recognition.compare_faces([stored_face_encoding], current_face_encoding)
+            if matches[0]:
+                self.status_label.text = "Face recognition successful! You are authorized."
+                print("Face recognition successful! You are authorized.")
+                # Add attendance to the database
+                from datetime import datetime
+                now = datetime.now()
+                year = now.strftime("%Y")
+                month = now.strftime("%m")
+                day = now.strftime("%d")
+
+                attendance_ref = db.reference(f'{typeof}/{schoolName}/{role}s/{username}/attendance/{year}/{month}/{day}/status')
+                attendance_ref.set('present')
+                print(f"Attendance marked for {username} on {year}-{month}-{day}.")
+                toast('Attendance Marked')
+                self.stop_camera()
+                self.manager.transition = SlideTransition(direction="right")
+                self.manager.current = 'school_teacher_myAttendance'
+            else:
+                self.status_label.text = "Face recognition failed. You are not authorized."
+                print("Face recognition failed. You are not authorized.")
+        except Exception as e:
+            self.status_label.text = f"Error: {str(e)}"
+            print(f"Error in face recognition: {str(e)}")
+
+class FaceRecognitionApp(MDApp):
     def build(self):
-        self.theme_cls.primary_palette = "Blue"
-        sm = ScreenManager()
-        sm.add_widget(FacialRecognition(name='facial_recognition'))
-        return sm
+        self.screen_manager = ScreenManager()
+        self.facial_recognition_screen = FacialRecognition(name='facial_recognition')
+        self.screen_manager.add_widget(self.facial_recognition_screen)
+        return self.screen_manager
+
+    def update_fields(self, school_name, type_of, role, username):
+        self.facial_recognition_screen.update_fields(school_name, type_of, role, username)
 
 if __name__ == '__main__':
-    FacialRecognitionApp().run()
+    FaceRecognitionApp().run()

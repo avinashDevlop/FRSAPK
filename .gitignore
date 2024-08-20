@@ -1,7 +1,7 @@
 # Ignore sensitive files
-path/to/serviceAccountKey.json
-path/to/Screens/Register.py
-path/to/Screens/note.txt
+../serviceAccountKey.json
+../Screens/Register.py
+../Screens/note.txt
 
 # Ignore compiled Python files
 *.pyc

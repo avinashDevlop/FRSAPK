@@ -145,7 +145,8 @@ class myAttendanceTech(MDScreen):
                 if result:
                     if result.get('registration_status') == True:
                         self.top_layout.remove_widget(self.register_button)
-                        self.update_profile_image()
+                        if 'image_url' in result:
+                            self.update_profile_image(result['image_url'])
                         self.add_attendance_ui()
                     self.update_ui_with_data(result)
 
@@ -153,7 +154,7 @@ class myAttendanceTech(MDScreen):
                 print(f"Failed to fetch user data: {result}")
 
             def on_error(req, error):
-                print(f"Error fetching user data kk: {error}")
+                print(f"Error fetching user data: {error}")
 
             UrlRequest(url, on_success=on_success, on_failure=on_failure, on_error=on_error)
 
@@ -161,24 +162,26 @@ class myAttendanceTech(MDScreen):
         if 'name' in data:
             self.profile_label.text = data['name']
         # Add more UI updates as needed
-
-    def update_profile_image(self):
-        encoded_username = urllib.parse.quote(self.fields['userName'])
-        image_url = f"https://storage.googleapis.com/facialrecognitiondb.appspot.com/{self.fields['typeOf']}/{self.fields['schoolName']}/{self.fields['role']}/{encoded_username}/face_registrationsIMG.png"
-
+    
+    def update_profile_image(self, image_url):
         def load_image(dt):
             try:
                 response = requests.get(image_url)
+                response.raise_for_status()  # Check for HTTP errors
                 img_data = BytesIO(response.content)
-                img = CoreImage(img_data, ext="png", filename=image_url)
-
+                img = CoreImage(img_data, ext="jpg")
                 self.profile_image.texture = img.texture
                 self.profile_image.update_canvas()
-
-            except Exception as e:
-                print(f"Error loading image: {e}")
+            except requests.exceptions.HTTPError as http_err:
+                if http_err.response.status_code == 403:
+                    print("Error: Forbidden. Check bucket permissions and CORS settings.")
+                else:
+                    print(f"HTTP error occurred: {http_err}")
+            except Exception as err:
+                print(f"Other error occurred: {err}")
 
         Clock.schedule_once(load_image)
+
 
     def add_attendance_ui(self):
         # Clear existing content
@@ -198,17 +201,17 @@ class myAttendanceTech(MDScreen):
         attendance_button = MDRaisedButton(
             text="Attendance",
             size_hint=(None, None),
-            size=(dp(120), dp(40)),
+            size=(dp(300), dp(40)),
             pos_hint={'center_x': 0.5},
             on_release=self.on_attendance_press
         )
         self.content_layout.add_widget(attendance_button)
-
+    
         # Leave Letter button
         leave_letter_button = MDRaisedButton(
             text="Leave Letter",
             size_hint=(None, None),
-            size=(dp(120), dp(40)),
+            size=(dp(300), dp(40)),
             pos_hint={'center_x': 0.5},
             on_release=self.on_leave_letter_press
         )
@@ -222,7 +225,10 @@ class myAttendanceTech(MDScreen):
 
     def on_attendance_press(self, instance):
         print("Attendance button pressed")
-        # Add your Attendance functionality here
+        screen = self.manager.get_screen('school_teacher_aboutAttendance')
+        screen.update_fields(self.fields["schoolName"], self.fields["typeOf"], self.fields["role"], self.fields["userName"])
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = 'school_teacher_aboutAttendance'
 
     def on_leave_letter_press(self, instance):
         print("Leave Letter button pressed")

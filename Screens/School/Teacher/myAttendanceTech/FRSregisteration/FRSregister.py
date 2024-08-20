@@ -179,16 +179,16 @@ class RegisterWithFace(MDScreen):
 
         pil_image = PILImage.fromarray(cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB))
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='PNG')
-        png_data = buffer.getvalue()
+        pil_image.save(buffer, format='JPEG', quality=85)  # Save as JPEG with 85% quality
+        jpg_data = buffer.getvalue()
 
         try:
             typeof = self.fields['TypeOf']
             schoolName = self.fields["SchoolName"]
             role = self.fields["role"]
             username = self.fields["userName"]
-            blob = bucket.blob(f'{typeof}/{schoolName}/{role}/{username}/face_registrationsIMG.png')
-            blob.upload_from_string(png_data, content_type='image/png')
+            blob = bucket.blob(f'{typeof}/{schoolName}/{role}/{username}/face_registrationIMG.jpg')  # Changed extension to .jpg
+            blob.upload_from_string(jpg_data, content_type='image/jpeg')  # Changed content type to image/jpeg
             blob.make_public()
             image_url = blob.public_url
             current_time = datetime.utcnow().isoformat()
