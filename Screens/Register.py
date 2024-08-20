@@ -20,9 +20,9 @@ import random
 from kivy.properties import ObjectProperty
 
 # Ensure the environment variables are set
-os.environ['TWILIO_ACCOUNT_SID'] = 'ACb3fafc23ffc094440f19e652ba91a1e2'
-os.environ['TWILIO_AUTH_TOKEN'] = 'eb0a2728c740add095ef982fb3933658'
-os.environ['TWILIO_SERVICE_SID'] = 'VAe814c9ac1f8924d7058398b0f23b29e2'
+os.environ['TWILIO_ACCOUNT_SID'] = ''
+os.environ['TWILIO_AUTH_TOKEN'] = ''
+os.environ['TWILIO_SERVICE_SID'] = ''
 
 class CustomButton(MDRaisedButton):
     def __init__(self, **kwargs):
