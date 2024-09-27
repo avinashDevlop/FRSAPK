@@ -64,9 +64,17 @@ jobs:
           "extras;android;m2repository" \
           "tools"
           
-          # Check if the required build tools are installed
+          # Install Android NDK 25b
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+          "ndk;25.1.8937393"
+
+          # Check if the required build tools and NDK are installed
           if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
             echo "Build-tools not found, installation may have failed."
+            exit 1
+          fi
+          if [ ! -d "$HOME/android-sdk/ndk/25.1.8937393" ]; then
+            echo "NDK not found, installation may have failed."
             exit 1
           fi
 
@@ -75,6 +83,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/ndk/25.1.8937393" >> $GITHUB_PATH
 
       - name: Copy aidl binary to Build Tools
         run: |
