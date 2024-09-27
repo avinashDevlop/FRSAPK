@@ -94,10 +94,14 @@ jobs:
             sed -i 's/^android.ndk_path =.*/android.ndk_path = \/home\/runner\/android-sdk\/ndk\/25.2.9519653/' buildozer.spec
           fi
 
+      - name: Clean Buildozer
+        run: |
+          buildozer android clean
+
       - name: Build APK
         run: |
           mkdir -p logs
-          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt
+          buildozer -v android debug --log_level 3 > logs/buildozer_log.txt
 
       - name: Upload APK as an artifact
         uses: actions/upload-artifact@v4
