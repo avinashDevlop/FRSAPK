@@ -43,9 +43,15 @@ jobs:
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
           
-          # Unzip the command-line tools
+          # Unzip the command-line tools and check if it succeeds
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
           
+          # Check if sdkmanager exists after unzipping
+          if [ ! -f "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "sdkmanager not found, unzipping may have failed."
+            exit 1
+          fi
+
           # Install Android SDK tools
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
