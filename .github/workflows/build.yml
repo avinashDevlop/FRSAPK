@@ -13,7 +13,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-8-jdk unzip
+          sudo apt-get install -y openjdk-11-jdk unzip
           sudo apt install -y python3 python3-pip ipython3
           sudo apt-get install -y autoconf
           sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev
@@ -22,16 +22,20 @@ jobs:
           # Install Cython using pip
           python3 -m pip install --upgrade pip
           python3 -m pip install cython
+          
           # Install Buildozer
           git clone https://github.com/kivy/buildozer.git
           cd buildozer
           sudo python3 setup.py install
+          
+          # Install python-for-android
+          python3 -m pip install python-for-android
 
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: '8' # or your required version
-          distribution: 'adopt' # Specify the distribution (adopt, zulu, etc.)
+          java-version: '11'
+          distribution: 'adopt'
 
       - name: Set up Android SDK
         run: |
@@ -39,13 +43,17 @@ jobs:
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0" # Change versions as necessary
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+
+      - name: Add Buildozer and Android SDK to PATH
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
       - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
-        with:
-          buildozer-cmd: buildozer -v android debug
-          work-dir: . # directory where your main.py file rests
+        run: |
+          buildozer -v android debug
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
