@@ -86,11 +86,11 @@ class SchoolAdminScreen(Screen):
 
         options = [
             ("About School", './assets/images/ImgSchool/AboutSchool.png', 'school_admin_about'),
-            ("My Attendance", './assets/images/ImgSchool/myAttendance.png', 'my_attendance'),
+            ("My Attendance", './assets/images/ImgSchool/myAttendance.png', 'school_admin_myAttendance'),
             ("Teachers", './assets/images/ImgSchool/Teacher.png', 'school_admin_teacher'),
-            ("Students", './assets/images/ImgSchool/Student.png', 'students'),
-            ("Staff", './assets/images/ImgSchool/Staff.png', 'staff'),
-            ("Schedule", './assets/images/ImgSchool/Schedule.png', 'schedule'),
+            ("Students", './assets/images/ImgSchool/Student.png', 'school_admin_studentHome'),
+            ("Staff", './assets/images/ImgSchool/Staff.png', 'school_admin_staffHome'),
+            ("Schedule", './assets/images/ImgSchool/Schedule.png', 'school_admin_scheduleHome'),
         ]
 
         for i in range(0, len(options), 2):

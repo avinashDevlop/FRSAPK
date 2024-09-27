@@ -8,15 +8,19 @@ from kivy.uix.boxlayout import BoxLayout
 from firebase_admin import db
 
 class TeacherDetailsScreen(MDScreen):
-    def update_fields(self, school_name, type_of):
+    def update_fields(self, school_name, type_of ,role , userName):
         self.DBLocation["typeOf"] = type_of
         self.DBLocation["schoolName"] = school_name
+        self.DBLocation["role"]  = role
+        self.DBLocation["userName"] = userName
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.DBLocation = {
             "typeOf": "",
-            "schoolName": ""
+            "schoolName": "",
+            "role": "",
+            "userName": ""
         }
         # Set up the layout
         self.layout = BoxLayout(orientation='vertical')
@@ -73,7 +77,7 @@ class TeacherDetailsScreen(MDScreen):
 
     def navigate_to_teacher_info(self, name):
         teacher_info_screen = self.manager.get_screen('school_admin_teacherInfo')
-        teacher_info_screen.update_fields(self.DBLocation["schoolName"], self.DBLocation["typeOf"], name)
+        teacher_info_screen.update_fields(self.DBLocation["schoolName"], self.DBLocation["typeOf"],self.DBLocation["role"], name)
         self.manager.transition = SlideTransition(direction="left")
         self.manager.current = 'school_admin_teacherInfo'
 

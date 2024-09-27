@@ -9,7 +9,6 @@ from kivy.graphics import Color, Rectangle
 from kivy.utils import get_color_from_hex
 from kivy.logger import Logger
 from kivy.core.window import Window
-from Screens.School.AdminPrincipal.AboutSchool import AboutSchoolScreen
 
 class RoundedButton(Button):
     def __init__(self, **kwargs):
@@ -85,10 +84,10 @@ class SchoolTeacherScreen(Screen):
         options_layout.bind(minimum_height=options_layout.setter('height'))
 
         options = [
-            ("About School", './assets/images/ImgSchool/AboutSchool.png', 'school_Teacher_about'),
+            ("About School", './assets/images/ImgSchool/AboutSchool.png', 'school_teacher_aboutSchool'),
             ("My Attendance", './assets/images/ImgSchool/myAttendance.png', 'school_teacher_myAttendance'),
-            ("Students", './assets/images/ImgSchool/Student.png', 'students'),
-            ("Schedule", './assets/images/ImgSchool/Schedule.png', 'schedule'),
+            ("Students", './assets/images/ImgSchool/Student.png', 'school_teacher_student'),
+            ("Schedule", './assets/images/ImgSchool/Schedule.png', 'school_teacher_schedule'),
         ]
 
         for i in range(0, len(options), 2):
@@ -134,8 +133,8 @@ class SchoolTeacherScreen(Screen):
     def go_to_screen(self, screen_name):
         def on_touch_down(instance, touch):
             if instance.collide_point(*touch.pos):
-                if screen_name == 'school_admin_about':
-                    about_screen = self.manager.get_screen('school_admin_about')
+                if screen_name == 'school_teacher_aboutSchool':
+                    about_screen = self.manager.get_screen('school_teacher_aboutSchool')
                     about_screen.update_fields(schoolName, type_of_global, role_global, username_global)
                 elif screen_name == 'school_teacher_myAttendance':
                     screen = self.manager.get_screen('school_teacher_myAttendance')
@@ -211,7 +210,6 @@ class MyApp(App):
         sm.add_widget(StudentsScreen(name='students'))
         sm.add_widget(StaffScreen(name='staff'))
         sm.add_widget(ScheduleScreen(name='schedule'))
-        sm.add_widget(AboutSchoolScreen(name='school_admin_about'))
         return sm
 
 if __name__ == '__main__':

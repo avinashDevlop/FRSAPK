@@ -1,5 +1,6 @@
 import re
 import requests
+from kivy.core.window import Window
 from kivy.uix.screenmanager import SlideTransition
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
@@ -11,6 +12,7 @@ from kivy.uix.image import Image
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.toast import toast
+from kivy.core.clipboard import Clipboard
 
 class AboutSchoolScreen(MDScreen):
     def update_fields(self, school_name, type_of, role, username):
@@ -32,15 +34,18 @@ class AboutSchoolScreen(MDScreen):
             "Email": None,
             "Website": None,
             "Established Year": None,
+            "Coordinates": None,
+            # "Latitude": None,
+            # "Longitude": None,
             "School Motto": None,
-            "Number of Students": None,
+            "Number of Students": None
         }
 
         self.numeric_fields = [
             "Zip Code",
             "Phone Number",
             "Established Year",
-            "Number of Students"
+            "Number of Students",
         ]
 
         self.DBLocation = {
@@ -78,8 +83,11 @@ class AboutSchoolScreen(MDScreen):
                 mode="rectangle",
                 size_hint_y=None,
                 height="48dp",
-                input_filter='int' if field in self.numeric_fields else None
+                multiline=False,  # Allows single-line input with clipboard paste functionality
+                input_filter='float' if field in self.numeric_fields else None
             )
+            text_field.bind(on_text_validate=lambda instance: self.check_paste(instance))  # Check for pasting on validation
+            text_field.on_double_tap = self.paste_text  # Enable paste on double-tap
             self.fields[field] = text_field
             content.add_widget(text_field)
 
@@ -116,12 +124,30 @@ class AboutSchoolScreen(MDScreen):
             if field_name == "Website" and not self.validate_website(text_field.text):
                 toast(f"{field_name} is in an invalid format.")
                 return
-            if field_name in self.numeric_fields and not text_field.text.isdigit():
+            if field_name in self.numeric_fields and field_name != "Coordinates" and not text_field.text.replace(".", "").isdigit():
                 toast(f"{field_name} should be numeric.")
                 return
 
-        data = {field_name: text_field.text for field_name, text_field in self.fields.items()}
+            # Validate and split "Coordinates" into latitude and longitude
+            if field_name == "Coordinates":
+                coordinates = text_field.text.split(',')
+                if len(coordinates) != 2:
+                    toast("Coordinates should be in 'latitude,longitude' format.")
+                    return
+                try:
+                    latitude = float(coordinates[0].strip())
+                    longitude = float(coordinates[1].strip())
+                except ValueError:
+                    toast("Invalid coordinates format.")
+                    return
+
+        # Prepare data for Firebase submission
+        data = {field_name: text_field.text for field_name, text_field in self.fields.items() if field_name != "Coordinates"}
+        data["Latitude"] = latitude
+        data["Longitude"] = longitude
+
         self.send_to_firebase(data)
+
 
     def validate_email(self, email):
         return re.match(r"[^@]+@[^@]+\.[^@]+", email)
@@ -133,7 +159,7 @@ class AboutSchoolScreen(MDScreen):
         return re.match(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+", website)  # Basic URL validation regex
 
     def send_to_firebase(self, data):
-        school_name = self.DBLocation["schoolName"].replace(" ", "_")
+        school_name = self.DBLocation["schoolName"]
         type_of = self.DBLocation["TypeOf"]
         url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{type_of}/{school_name}/schoolDetails.json"
 
@@ -144,7 +170,7 @@ class AboutSchoolScreen(MDScreen):
             toast("Failed submission.")
 
     def populate_fields(self):
-        school_name = self.DBLocation["schoolName"].replace(" ", "_")
+        school_name = self.DBLocation["schoolName"]
         type_of = self.DBLocation["TypeOf"]
         url = f"https://facialrecognitiondb-default-rtdb.firebaseio.com/{type_of}/{school_name}/schoolDetails.json"
 
@@ -153,15 +179,28 @@ class AboutSchoolScreen(MDScreen):
             data = response.json()
             if data:
                 for field_name, value in data.items():
-                    if field_name in self.fields:
+                    if field_name in self.fields and field_name != "Coordinates":
                         self.fields[field_name].text = value
+                # Combine latitude and longitude for "Coordinates" field
+                if "Latitude" in data and "Longitude" in data:
+                    self.fields["Coordinates"].text = f"{data['Latitude']}, {data['Longitude']}"
         else:
             toast("Failed to load data.")
+
+
+    def paste_text(self, instance):
+        instance.text = Clipboard.paste()
+
+    def check_paste(self, instance):
+        if instance.focus:
+            instance.select_all()
+
 
 class SchoolApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "DeepPurple"
         return AboutSchoolScreen()
+
 
 if __name__ == '__main__':
     SchoolApp().run()

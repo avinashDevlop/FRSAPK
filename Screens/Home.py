@@ -6,7 +6,6 @@ from kivymd.uix.label import MDLabel
 from kivy.uix.image import Image
 from kivy.metrics import dp
 
-
 class Home(MDScreen):
     def __init__(self, **kwargs):
         super(Home, self).__init__(**kwargs)
@@ -15,7 +14,7 @@ class Home(MDScreen):
 
         # Add settings icon in a FloatLayout to position it at the top right
         self.float_layout = MDFloatLayout(size_hint=(1, None), height=dp(40))
-        self.settings_button = MDIconButton(icon="cog", pos_hint={'right': 1, 'top': 1})
+        self.settings_button = MDIconButton(icon="information", pos_hint={'right': 1, 'top': 1},theme_text_color="Custom",text_color=(0, 0, 1, 1) )
         self.float_layout.add_widget(self.settings_button)
         self.layout.add_widget(self.float_layout)
 
