@@ -21,8 +21,7 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install cython==0.29.21
 
-          # Uninstall incompatible sh and install a compatible version
-          python3 -m pip uninstall -y sh
+          # Install sh version 1.14.3
           python3 -m pip install sh==1.14.3
 
           # Install Buildozer
@@ -45,42 +44,29 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
-      - name: Set up Android SDK
+      - name: Set up Android SDK and NDK
         run: |
           echo "sdk.dir=$HOME/android-sdk" > local.properties
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
-          
-          # Unzip the command-line tools directly into the latest directory
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
-          
-          # Move the extracted cmdline-tools folder up one level to the latest directory
           mv $HOME/android-sdk/cmdline-tools/latest/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
-          
-          # Clean up the now empty cmdline-tools directory
           rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
           
-          # Install Android SDK tools and Build-Tools
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
           "platforms;android-31" \
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
-          "tools"
-
-          # Clean any existing NDK installations
-          rm -rf $HOME/android-sdk/ndk
-
-          # Install Android NDK 25b
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
-          "ndk;25.1.8937393"
+          "tools" \
+          "ndk;25.2.9519653"
 
           # Check if the required build tools and NDK are installed
           if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
             echo "Build-tools not found, installation may have failed."
             exit 1
           fi
-          if [ ! -d "$HOME/android-sdk/ndk/25.1.8937393" ]; then
+          if [ ! -d "$HOME/android-sdk/ndk/25.2.9519653" ]; then
             echo "NDK not found, installation may have failed."
             exit 1
           fi
@@ -90,7 +76,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/ndk/25.1.8937393" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
 
       - name: Copy aidl binary to Build Tools
         run: |
