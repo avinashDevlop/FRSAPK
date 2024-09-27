@@ -6,13 +6,13 @@
 [app]
 
 # (str) Title of your application
-title = Facial Recoginition System
+title = Facial Recognition System
 
 # (str) Package name
 package.name = FRS
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.hexafire4
+package.domain = org.hexafire4.com
 
 # (str) Source code where the main.py live
 source.dir = ./
@@ -118,7 +118,7 @@ android.minapi = 21
 android.sdk = 31
 
 # (str) Android NDK version to use
-android.ndk = 21b
+android.ndk = 25b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 #android.ndk_api = 21
