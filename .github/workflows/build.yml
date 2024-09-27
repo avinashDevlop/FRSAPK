@@ -18,7 +18,6 @@ jobs:
           sudo apt-get install -y autoconf
           sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev
           sudo apt-get install -y zip
-          sudo apt-get install -y unzip
           
           # Install Cython using pip
           python3 -m pip install --upgrade pip
@@ -44,9 +43,15 @@ jobs:
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
           
-          # Unzip the command-line tools and check if it succeeds
+          # Unzip the command-line tools directly into the latest directory
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
           
+          # Move the extracted cmdline-tools folder up one level to the latest directory
+          mv $HOME/android-sdk/cmdline-tools/latest/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+          
+          # Clean up the now empty cmdline-tools directory
+          rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
+
           # Check if sdkmanager exists after unzipping
           if [ ! -f "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
             echo "sdkmanager not found, unzipping may have failed."
