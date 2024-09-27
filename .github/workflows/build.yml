@@ -61,6 +61,12 @@ jobs:
           # Install Android SDK tools
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
+          # Verify if build-tools are installed
+          if [ ! -d "$HOME/android-sdk/build-tools/31.0.0" ]; then
+            echo "Build-tools not found, installation may have failed."
+            exit 1
+          fi
+
       - name: Check Installed SDK Packages
         run: |
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
