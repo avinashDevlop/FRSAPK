@@ -56,14 +56,17 @@ jobs:
           # Clean up the now empty cmdline-tools directory
           rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
           
-          # Install Android SDK tools and Build-Tools (using version 30.0.3 for stability)
+          # Install Android SDK tools and Build-Tools
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
           "platforms;android-30" \
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "tools"
-          
+
+          # Clean any existing NDK installations
+          rm -rf $HOME/android-sdk/ndk
+
           # Install Android NDK 25b
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "ndk;25.1.8937393"
