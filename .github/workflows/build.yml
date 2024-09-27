@@ -20,7 +20,11 @@ jobs:
           # Install Cython using pip
           python3 -m pip install --upgrade pip
           python3 -m pip install cython==0.29.21
-          
+
+          # Uninstall incompatible sh and install a compatible version
+          python3 -m pip uninstall -y sh
+          python3 -m pip install sh==1.14.3
+
           # Install Buildozer
           git clone https://github.com/kivy/buildozer.git
           cd buildozer
@@ -59,7 +63,7 @@ jobs:
           # Install Android SDK tools and Build-Tools
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
-          "platforms;android-30" \
+          "platforms;android-31" \
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "tools"
