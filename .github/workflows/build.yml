@@ -51,17 +51,17 @@ jobs:
           
           # Clean up the now empty cmdline-tools directory
           rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
-
-          # Check if sdkmanager exists after unzipping
-          if [ ! -f "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
-            echo "sdkmanager not found, unzipping may have failed."
-            exit 1
-          fi
-
-          # Install Android SDK tools
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0"
-
-          # Verify if build-tools are installed
+          
+          # Install Android SDK tools and Build-Tools (including aidl)
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+          "platform-tools" \
+          "platforms;android-31" \
+          "build-tools;31.0.0" \
+          "extras;android;m2repository" \
+          "tools" \
+          "build-tools;31.0.0"
+          
+          # Check if the required build tools are installed
           if [ ! -d "$HOME/android-sdk/build-tools/31.0.0" ]; then
             echo "Build-tools not found, installation may have failed."
             exit 1
