@@ -10,33 +10,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # Specify Python 3.9 as it's known to work well with Buildozer
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl
-          sudo apt install -y python3 python3-pip ipython3 autoconf
           sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev zip
+          sudo apt install -y autoconf automake libtool
           
           # Install Cython using pip
-          python3 -m pip install --upgrade pip
-          python3 -m pip install cython==0.29.21
+          python -m pip install --upgrade pip
+          python -m pip install cython==0.29.21
 
           # Install sh version 1.14.3
-          python3 -m pip install sh==1.14.3
+          python -m pip install sh==1.14.3
 
           # Install Buildozer
-          git clone https://github.com/kivy/buildozer.git
-          cd buildozer
-          sudo python3 setup.py install
-          
+          python -m pip install --upgrade buildozer
+
           # Install python-for-android
-          python3 -m pip install python-for-android
+          python -m pip install python-for-android
 
       - name: Check for Installed Dependencies
         run: |
-          python3 -m pip show cython
-          python3 -m pip show python-for-android
-          which buildozer
+          python -m pip show cython
+          python -m pip show python-for-android
+          python -m pip show buildozer
 
       - name: Set up JDK
         uses: actions/setup-java@v2
@@ -80,8 +83,16 @@ jobs:
 
       - name: Copy aidl binary to Build Tools
         run: |
-          cp /usr/bin/aidl $HOME/android-sdk/build-tools/30.0.3/
-          chmod -R 777 $HOME/android-sdk/build-tools/30.0.3/
+          sudo cp /usr/bin/aidl $HOME/android-sdk/build-tools/30.0.3/
+          sudo chmod -R 777 $HOME/android-sdk/build-tools/30.0.3/
+
+      - name: Create buildozer.spec if not exists
+        run: |
+          if [ ! -f "buildozer.spec" ]; then
+            buildozer init
+            sed -i 's/^android.sdk_path =.*/android.sdk_path = \/home\/runner\/android-sdk/' buildozer.spec
+            sed -i 's/^android.ndk_path =.*/android.ndk_path = \/home\/runner\/android-sdk\/ndk\/25.2.9519653/' buildozer.spec
+          fi
 
       - name: Build APK
         run: |
