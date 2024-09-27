@@ -13,7 +13,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # Specify Python 3.9 as it's known to work well with Buildozer
+          python-version: '3.9'
 
       - name: Install Dependencies
         run: |
@@ -22,17 +22,10 @@ jobs:
           sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev zip
           sudo apt install -y autoconf automake libtool
           
-          # Install Cython using pip
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
-
-          # Install sh version 1.14.3
           python -m pip install sh==1.14.3
-
-          # Install Buildozer
           python -m pip install --upgrade buildozer
-
-          # Install python-for-android
           python -m pip install python-for-android
 
       - name: Check for Installed Dependencies
@@ -40,6 +33,10 @@ jobs:
           python -m pip show cython
           python -m pip show python-for-android
           python -m pip show buildozer
+
+      - name: Check for Installed Python-for-Android
+        run: |
+          python -m pip show python-for-android || { echo "python-for-android not installed!"; exit 1; }
 
       - name: Set up JDK
         uses: actions/setup-java@v2
@@ -64,16 +61,6 @@ jobs:
           "tools" \
           "ndk;25.2.9519653"
 
-          # Check if the required build tools and NDK are installed
-          if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
-            echo "Build-tools not found, installation may have failed."
-            exit 1
-          fi
-          if [ ! -d "$HOME/android-sdk/ndk/25.2.9519653" ]; then
-            echo "NDK not found, installation may have failed."
-            exit 1
-          fi
-
       - name: Add Buildozer and Android SDK to PATH
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -97,6 +84,10 @@ jobs:
       - name: Clean Buildozer
         run: |
           buildozer android clean
+
+      - name: Debug: Check for Python-for-Android Directory
+        run: |
+          ls -la ~/.buildozer/android/platform/
 
       - name: Build APK
         run: |
