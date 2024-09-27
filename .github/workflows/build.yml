@@ -19,7 +19,7 @@ jobs:
           
           # Install Cython using pip
           python3 -m pip install --upgrade pip
-          python3 -m pip install cython
+          python3 -m pip install cython==0.29.21
           
           # Install Buildozer
           git clone https://github.com/kivy/buildozer.git
@@ -28,7 +28,13 @@ jobs:
           
           # Install python-for-android
           python3 -m pip install python-for-android
-          
+
+      - name: Check for Installed Dependencies
+        run: |
+          python3 -m pip show cython
+          python3 -m pip show python-for-android
+          which buildozer
+
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
@@ -50,16 +56,16 @@ jobs:
           # Clean up the now empty cmdline-tools directory
           rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
           
-          # Install Android SDK tools and Build-Tools (including aidl)
+          # Install Android SDK tools and Build-Tools (using version 30.0.3 for stability)
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
-          "platforms;android-31" \
-          "build-tools;31.0.0" \
+          "platforms;android-30" \
+          "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "tools"
           
           # Check if the required build tools are installed
-          if [ ! -d "$HOME/android-sdk/build-tools/31.0.0" ]; then
+          if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
             echo "Build-tools not found, installation may have failed."
             exit 1
           fi
@@ -72,15 +78,22 @@ jobs:
 
       - name: Copy aidl binary to Build Tools
         run: |
-          cp /usr/bin/aidl $HOME/android-sdk/build-tools/31.0.0/
-          chmod 777 $HOME/android-sdk/build-tools/31.0.0/aidl
+          cp /usr/bin/aidl $HOME/android-sdk/build-tools/30.0.3/
+          chmod -R 777 $HOME/android-sdk/build-tools/30.0.3/
 
       - name: Build APK
         run: |
-          buildozer -v android debug --log_level 2
+          mkdir -p logs
+          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt
 
       - name: Upload APK as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: package
           path: ./bin/*.apk
+
+      - name: Store Buildozer Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer_logs
+          path: logs/buildozer_log.txt
