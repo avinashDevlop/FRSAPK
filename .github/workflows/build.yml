@@ -18,6 +18,7 @@ jobs:
           sudo apt-get install -y autoconf
           sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev
           sudo apt-get install -y zip
+          sudo apt-get install -y unzip
           
           # Install Cython using pip
           python3 -m pip install --upgrade pip
