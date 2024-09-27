@@ -13,16 +13,9 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk unzip
-          sudo apt install -y python3 python3-pip ipython3
-          sudo apt-get install -y autoconf
-          sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev
-          sudo apt-get install -y zip
-          
-          # Install additional dependencies
-          sudo apt-get install build-essential
-          sudo apt-get install libstdc++6
-          sudo apt-get install aidl
+          sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl
+          sudo apt install -y python3 python3-pip ipython3 autoconf
+          sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev zip
           
           # Install Cython using pip
           python3 -m pip install --upgrade pip
@@ -63,8 +56,7 @@ jobs:
           "platforms;android-31" \
           "build-tools;31.0.0" \
           "extras;android;m2repository" \
-          "tools" \
-          "build-tools;31.0.0"
+          "tools"
           
           # Check if the required build tools are installed
           if [ ! -d "$HOME/android-sdk/build-tools/31.0.0" ]; then
@@ -72,21 +64,22 @@ jobs:
             exit 1
           fi
 
-      - name: Check Installed SDK Packages
-        run: |
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
-
       - name: Add Buildozer and Android SDK to PATH
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
+      - name: Copy aidl binary to Build Tools
+        run: |
+          cp /usr/bin/aidl $HOME/android-sdk/build-tools/31.0.0/
+          chmod 777 $HOME/android-sdk/build-tools/31.0.0/aidl
+
       - name: Build APK
         run: |
-          buildozer -v android debug
+          buildozer -v android debug --log_level 2
 
-      - name: Upload artifacts
+      - name: Upload APK as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: package
