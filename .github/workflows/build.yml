@@ -1,3 +1,5 @@
+name: Build APK
+
 on:
   push:
     branches: [ main ]
@@ -7,6 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11' # or your required version
+
+      - name: Set up Android SDK
+        run: |
+          echo "sdk.dir=/usr/local/android-sdk" > local.properties
+          mkdir -p /usr/local/android-sdk
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d /usr/local/android-sdk/
+          yes | sdkmanager --sdk_root=/usr/local/android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0" # Change versions as necessary
+
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
