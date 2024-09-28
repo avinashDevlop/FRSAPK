@@ -99,7 +99,7 @@ jobs:
         run: |
           echo "Cleaning build with Buildozer."
           # Explicitly setting the python-for-android directory path to avoid the error
-          buildozer -v android clean p4a.source_dir=$HOME/.buildozer/android/platform/python-for-android || { echo "Clean failed. Exiting."; exit 1; }
+          buildozer -v android clean || { echo "Clean failed. Exiting."; exit 1; }
 
       - name: Build APK
         run: |
