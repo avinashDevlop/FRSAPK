@@ -89,6 +89,11 @@ jobs:
         run: |
           buildozer android clean
 
+      - name: Ensure .buildozer folder exists
+        run: |
+          mkdir -p .buildozer/android/platform
+          mkdir -p .buildozer/android/platform/python-for-android
+
       - name: Build APK
         run: |
           mkdir -p logs
