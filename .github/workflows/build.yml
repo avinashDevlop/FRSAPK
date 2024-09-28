@@ -65,6 +65,7 @@ jobs:
           cd $HOME/.buildozer/android/platform/python-for-android
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
+          ls -al $HOME/.buildozer/android/platform/
 
       - name: Verify python-for-android Directory
         run: |
@@ -90,7 +91,8 @@ jobs:
           sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
           sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
-          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
+          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildo zer.spec
+          echo "p4a.bootstrap = sdl2" >> buildozer.spec
 
       - name: Clean Buildozer
         run: |
