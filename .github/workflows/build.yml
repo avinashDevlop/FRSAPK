@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
                                   autoconf automake libtool pkg-config cmake
-          
+
           # Install Cython, OpenCV, face_recognition, and other needed Python packages
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
