@@ -23,11 +23,8 @@ jobs:
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
                                   autoconf automake libtool pkg-config cmake
           python -m pip install --upgrade pip
-          python -m pip install cython==0.29.21
-          python -m pip install buildozer==1.5.0
-          python -m pip install opencv-python-headless
-          python -m pip install face_recognition
-          
+          python -m pip install cython==0.29.21 buildozer==1.5.0 opencv-python-headless face_recognition
+
       - name: Set up Android SDK and NDK
         run: |
           echo "sdk.dir=$HOME/android-sdk" > local.properties
@@ -66,29 +63,8 @@ jobs:
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 
-          # Verify the directory exists and list its contents
-          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            echo "python-for-android directory exists. Contents:"
-            ls -al $HOME/.buildozer/android/platform/python-for-android
-          else
-            echo "Error: python-for-android directory is missing."
-            ls -al $HOME/.buildozer/android/platform/
-            exit 1
-          fi
-          
           # Set permissions
           chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
-
-      - name: Verify python-for-android Directory
-        run: |
-          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            echo "python-for-android directory exists."
-            ls -al $HOME/.buildozer/android/platform/python-for-android
-          else
-            echo "Error: python-for-android directory is missing."
-            ls -al $HOME/.buildozer/android/platform/
-            exit 1
-          fi
 
       - name: Initialize Buildozer
         run: |
@@ -113,25 +89,14 @@ jobs:
 
       - name: Clean Buildozer
         run: |
-          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            echo "Cleaning build with Buildozer."
-            buildozer android clean || { echo "Clean failed. Exiting."; exit 1; }
-          else
-            echo "Skipping clean step. python-for-android directory not found."
-            ls -al $HOME/.buildozer/android/platform/
-            exit 1
-          fi
+          echo "Cleaning build with Buildozer."
+          buildozer android clean || { echo "Clean failed. Exiting."; exit 1; }
 
       - name: Build APK
         run: |
           mkdir -p logs
-          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
-          else
-            echo "Cannot build APK. python-for-android directory is missing."
-            ls -al $HOME/.buildozer/android/platform/
-            exit 1
-          fi
+          echo "Building APK with Buildozer."
+          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
