@@ -13,7 +13,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.9'  # Specify Python 3.9 as it's known to work well with Buildozer
 
       - name: Install Dependencies
         run: |
@@ -21,12 +21,16 @@ jobs:
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl
           sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev zip
           sudo apt install -y autoconf automake libtool
-          
+
+          # Install Cython, sh, Buildozer, and python-for-android
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
           python -m pip install sh==1.14.3
           python -m pip install --upgrade buildozer
           python -m pip install python-for-android
+
+          # Ensure the correct setup of python-for-android
+          buildozer android update
 
       - name: Check for Installed Dependencies
         run: |
@@ -57,6 +61,7 @@ jobs:
           "tools" \
           "ndk;25.2.9519653"
 
+          # Verify build tools and NDK installation
           if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
             echo "Build-tools not found, installation may have failed."
             exit 1
@@ -86,9 +91,10 @@ jobs:
             sed -i 's/^android.ndk_path =.*/android.ndk_path = \/home\/runner\/android-sdk\/ndk\/25.2.9519653/' buildozer.spec
           fi
 
-      - name: Clean Buildozer
+      - name: Clean Buildozer Environment
         run: |
           buildozer android clean
+          buildozer android update
 
       - name: Build APK
         run: |
