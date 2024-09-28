@@ -46,8 +46,8 @@ jobs:
       - name: Set Environment Variables
         run: |
           echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
-          echo "ANDROIDSDK=/home/runner/android-sdk" >> $GITHUB_ENV
-          echo "ANDROIDNDK=/home/runner/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
           echo "ANDROIDAPI=31" >> $GITHUB_ENV
           echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
 
@@ -96,7 +96,7 @@ jobs:
         run: |
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
             echo "Cleaning build with Buildozer."
-            buildozer android clean
+            buildozer android clean || { echo "Clean failed. Exiting."; exit 1; }
           else
             echo "Skipping clean step. python-for-android directory not found."
           fi
@@ -105,7 +105,7 @@ jobs:
         run: |
           mkdir -p logs
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            buildozer -v android debug --log_level 2 > logs/buildozer_log.txt
+            buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; exit 1; }
           else
             echo "Cannot build APK. python-for-android directory is missing."
             exit 1
