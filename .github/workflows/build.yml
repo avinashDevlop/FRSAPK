@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK - Facial Recognition System
 
 on:
   push:
@@ -7,42 +7,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # Specify Python 3.9 as it's known to work well with Buildozer
+          python-version: '3.9'
 
-      - name: Install Dependencies
+      - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl
-          sudo apt install -y build-essential libltdl-dev libffi-dev libssl-dev python3-dev zip
-          sudo apt install -y autoconf automake libtool
-
-          # Install Cython, sh, Buildozer, and python-for-android
+          sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
+                                  autoconf automake libtool pkg-config cmake
+          
+          # Install Cython, OpenCV, face_recognition, and other needed Python packages
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
-          python -m pip install sh==1.14.3
-          python -m pip install --upgrade buildozer
+          python -m pip install buildozer
           python -m pip install python-for-android
-
-          # Ensure the correct setup of python-for-android
-          buildozer android update
-
-      - name: Check for Installed Dependencies
-        run: |
-          python -m pip show cython
-          python -m pip show python-for-android
-          python -m pip show buildozer
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          java-version: '11'
-          distribution: 'adopt'
+          python -m pip install opencv-python-headless
+          python -m pip install face_recognition
 
       - name: Set up Android SDK and NDK
         run: |
@@ -58,18 +45,15 @@ jobs:
           "platforms;android-31" \
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
-          "tools" \
           "ndk;25.2.9519653"
 
-          # Verify build tools and NDK installation
-          if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
-            echo "Build-tools not found, installation may have failed."
-            exit 1
-          fi
-          if [ ! -d "$HOME/android-sdk/ndk/25.2.9519653" ]; then
-            echo "NDK not found, installation may have failed."
-            exit 1
-          fi
+      - name: Set Environment Variables
+        run: |
+          export PACKAGES_PATH=/home/runner/.buildozer/android/packages
+          export ANDROIDSDK=/home/runner/android-sdk
+          export ANDROIDNDK=/home/runner/android-sdk/ndk/25.2.9519653
+          export ANDROIDAPI=31
+          export ANDROIDMINAPI=21
 
       - name: Add Buildozer and Android SDK to PATH
         run: |
@@ -83,32 +67,41 @@ jobs:
           sudo cp /usr/bin/aidl $HOME/android-sdk/build-tools/30.0.3/
           sudo chmod -R 777 $HOME/android-sdk/build-tools/30.0.3/
 
-      - name: Create buildozer.spec if not exists
+      - name: Initialize Buildozer
         run: |
           if [ ! -f "buildozer.spec" ]; then
             buildozer init
-            sed -i 's/^android.sdk_path =.*/android.sdk_path = \/home\/runner\/android-sdk/' buildozer.spec
-            sed -i 's/^android.ndk_path =.*/android.ndk_path = \/home\/runner\/android-sdk\/ndk\/25.2.9519653/' buildozer.spec
           fi
 
-      - name: Clean Buildozer Environment
+      - name: Modify buildozer.spec for Facial Recognition
+        run: |
+          # Modify the buildozer.spec file for dependencies and permissions
+          sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
+          sed -i 's/^# \(android.permissions = CAMERA\)/\1/' buildozer.spec
+          sed -i 's/^# \(android.permissions = WRITE_EXTERNAL_STORAGE\)/\1/' buildozer.spec
+          sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
+          sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
+
+          # Add OpenCV, face_recognition, and other required libraries
+          sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
+
+      - name: Clean Buildozer
         run: |
           buildozer android clean
-          buildozer android update
 
       - name: Build APK
         run: |
           mkdir -p logs
           buildozer -v android debug --log_level 3 > logs/buildozer_log.txt
 
-      - name: Upload APK as an artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: facial_recognition_apk
           path: ./bin/*.apk
 
-      - name: Store Buildozer Logs
+      - name: Upload Logs
         uses: actions/upload-artifact@v4
         with:
-          name: buildozer_logs
+          name: build_logs
           path: logs/buildozer_log.txt
