@@ -73,6 +73,7 @@ jobs:
           git clone https://github.com/kivy/python-for-android.git
           cd python-for-android
           git checkout $(git describe --tags --abbrev=0)
+          ls -la  # List contents to verify cloning
           cd $GITHUB_WORKSPACE
 
       - name: Initialize Buildozer
@@ -94,7 +95,11 @@ jobs:
 
       - name: Clean Buildozer
         run: |
-          buildozer android clean
+          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            buildozer android clean
+          else
+            echo "python-for-android directory not found. Skipping clean step."
+          fi
 
       - name: Build APK
         run: |
