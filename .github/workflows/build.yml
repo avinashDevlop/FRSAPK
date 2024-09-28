@@ -95,10 +95,6 @@ jobs:
           mkdir -p logs
           buildozer -v android debug --log_level 3 > logs/buildozer_log.txt
 
-      - name: Debug: Check APK Output
-        run: |
-          ls -la ./bin/*.apk
-
       - name: Upload APK as an artifact
         uses: actions/upload-artifact@v4
         with:
