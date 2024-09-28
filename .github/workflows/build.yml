@@ -65,12 +65,25 @@ jobs:
           cd $HOME/.buildozer/android/platform/python-for-android
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
-          ls -al $HOME/.buildozer/android/platform/
+          
+          # Verify the directory exists and list its contents
+          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "python-for-android directory exists. Contents:"
+            ls -al $HOME/.buildozer/android/platform/python-for-android
+          else
+            echo "Error: python-for-android directory is missing."
+            ls -al $HOME/.buildozer/android/platform/
+            exit 1
+          fi
+          
+          # Set permissions
+          chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
 
       - name: Verify python-for-android Directory
         run: |
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
             echo "python-for-android directory exists."
+            ls -al $HOME/.buildozer/android/platform/python-for-android
           else
             echo "Error: python-for-android directory is missing."
             ls -al $HOME/.buildozer/android/platform/
@@ -91,8 +104,12 @@ jobs:
           sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
           sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
-          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildo zer.spec
+          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
           echo "p4a.bootstrap = sdl2" >> buildozer.spec
+          
+          # Display the contents of buildozer.spec for verification
+          echo "Contents of buildozer.spec:"
+          cat buildozer.spec
 
       - name: Clean Buildozer
         run: |
@@ -101,15 +118,18 @@ jobs:
             buildozer android clean || { echo "Clean failed. Exiting."; exit 1; }
           else
             echo "Skipping clean step. python-for-android directory not found."
+            ls -al $HOME/.buildozer/android/platform/
+            exit 1
           fi
 
       - name: Build APK
         run: |
           mkdir -p logs
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; exit 1; }
+            buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
           else
             echo "Cannot build APK. python-for-android directory is missing."
+            ls -al $HOME/.buildozer/android/platform/
             exit 1
           fi
 
