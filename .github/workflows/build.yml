@@ -22,7 +22,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
                                   autoconf automake libtool pkg-config cmake
-          # Install Cython, OpenCV, face_recognition, and other needed Python packages
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
           python -m pip install buildozer==1.5.0
@@ -37,7 +36,6 @@ jobs:
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
           mv $HOME/android-sdk/cmdline-tools/latest/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
           rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
-          
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
           "platforms;android-31" \
@@ -60,24 +58,20 @@ jobs:
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
 
-      - name: Copy aidl binary to Build Tools
-        run: |
-          sudo cp /usr/bin/aidl $HOME/android-sdk/build-tools/30.0.3/
-          sudo chmod -R 777 $HOME/android-sdk/build-tools/30.0.3/
-
       - name: Clone python-for-android
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
           cd $HOME/.buildozer/android/platform/python-for-android
-          git checkout $(git describe --tags --abbrev=0)  # Checkout the latest stable tag
+          git fetch --tags
+          git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 
-      - name: Verify python-for-android Cloning
+      - name: Verify python-for-android Directory
         run: |
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
             echo "python-for-android directory exists."
           else
-            echo "python-for-android directory is missing."
+            echo "Error: python-for-android directory is missing."
             ls -al $HOME/.buildozer/android/platform/
             exit 1
           fi
@@ -90,7 +84,6 @@ jobs:
 
       - name: Modify buildozer.spec for Facial Recognition
         run: |
-          # Modify the buildozer.spec file for dependencies and permissions
           sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
           sed -i 's/^# \(android.permissions = CAMERA\)/\1/' buildozer.spec
           sed -i 's/^# \(android.permissions = WRITE_EXTERNAL_STORAGE\)/\1/' buildozer.spec
@@ -107,7 +100,6 @@ jobs:
           else
             echo "Skipping clean step. python-for-android directory not found."
           fi
-        shell: /usr/bin/bash -e {0}
 
       - name: Build APK
         run: |
