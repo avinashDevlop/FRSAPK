@@ -26,8 +26,7 @@ jobs:
           # Install Cython, OpenCV, face_recognition, and other needed Python packages
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
-          python -m pip install buildozer
-          python -m pip install python-for-android
+          python -m pip install buildozer==1.5.0
           python -m pip install opencv-python-headless
           python -m pip install face_recognition
 
@@ -49,11 +48,11 @@ jobs:
 
       - name: Set Environment Variables
         run: |
-          export PACKAGES_PATH=/home/runner/.buildozer/android/packages
-          export ANDROIDSDK=/home/runner/android-sdk
-          export ANDROIDNDK=/home/runner/android-sdk/ndk/25.2.9519653
-          export ANDROIDAPI=31
-          export ANDROIDMINAPI=21
+          echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
+          echo "ANDROIDSDK=/home/runner/android-sdk" >> $GITHUB_ENV
+          echo "ANDROIDNDK=/home/runner/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROIDAPI=31" >> $GITHUB_ENV
+          echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
 
       - name: Add Buildozer and Android SDK to PATH
         run: |
@@ -66,6 +65,13 @@ jobs:
         run: |
           sudo cp /usr/bin/aidl $HOME/android-sdk/build-tools/30.0.3/
           sudo chmod -R 777 $HOME/android-sdk/build-tools/30.0.3/
+
+      - name: Clone python-for-android
+        run: |
+          git clone https://github.com/kivy/python-for-android.git
+          cd python-for-android
+          git checkout v2023.08.25
+          cd ..
 
       - name: Initialize Buildozer
         run: |
@@ -81,28 +87,17 @@ jobs:
           sed -i 's/^# \(android.permissions = WRITE_EXTERNAL_STORAGE\)/\1/' buildozer.spec
           sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
           sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
-
-          # Add OpenCV, face_recognition, and other required libraries
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
+          echo "p4a.source_dir = $(pwd)/python-for-android" >> buildozer.spec
 
       - name: Clean Buildozer
         run: |
           buildozer android clean
 
-      - name: Ensure .buildozer folder exists
-        run: |
-          mkdir -p .buildozer/android/platform
-          mkdir -p .buildozer/android/platform/python-for-android
-
-      - name: List .buildozer Directory (Debug)
-        run: |
-          ls -la .buildozer/android/platform
-          ls -la .buildozer/android/platform/python-for-android
-
       - name: Build APK
         run: |
           mkdir -p logs
-          buildozer -v android debug --log_level 3 > logs/buildozer_log.txt
+          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
