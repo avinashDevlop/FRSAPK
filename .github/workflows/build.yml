@@ -59,6 +59,7 @@ jobs:
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "Cloning python-for-android"
             git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
           fi
           cd $HOME/.buildozer/android/platform/python-for-android
