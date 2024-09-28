@@ -39,7 +39,7 @@ jobs:
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "ndk;25.2.9519653"
-          
+
       - name: Set Environment Variables
         run: |
           echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
@@ -64,8 +64,6 @@ jobs:
           cd $HOME/.buildozer/android/platform/python-for-android
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
-
-          # Set permissions
           chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
 
       - name: Verify python-for-android Directory
@@ -93,8 +91,6 @@ jobs:
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
           echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
           echo "p4a.bootstrap = sdl2" >> buildozer.spec
-
-          # Display the contents of buildozer.spec for verification
           echo "Contents of buildozer.spec:"
           cat buildozer.spec
 
