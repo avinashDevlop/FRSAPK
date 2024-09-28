@@ -67,7 +67,6 @@ jobs:
 
       - name: Clone python-for-android
         run: |
-          # Clone python-for-android into the correct directory for Buildozer
           mkdir -p $HOME/.buildozer/android/platform
           git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
           cd $HOME/.buildozer/android/platform/python-for-android
@@ -113,7 +112,12 @@ jobs:
       - name: Build APK
         run: |
           mkdir -p logs
-          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt
+          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            buildozer -v android debug --log_level 2 > logs/buildozer_log.txt
+          else
+            echo "Cannot build APK. python-for-android directory is missing."
+            exit 1
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
