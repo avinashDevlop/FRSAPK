@@ -29,7 +29,7 @@ jobs:
           python -m pip install buildozer==1.5.0
           python -m pip install opencv-python-headless
           python -m pip install face_recognition
-
+          
       - name: Set up Android SDK and NDK
         run: |
           echo "sdk.dir=$HOME/android-sdk" > local.properties
@@ -93,12 +93,21 @@ jobs:
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
           echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
 
+      - name: Verify python-for-android Directory Exists
+        run: |
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "Error: python-for-android directory not found!"
+            exit 1
+          else
+            echo "python-for-android directory found. Proceeding with build."
+          fi
+
       - name: Clean Buildozer
         run: |
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
             buildozer android clean
           else
-            echo "python-for-android directory not found. Skipping clean step."
+            echo "Skipping clean step. python-for-android directory not found."
           fi
 
       - name: Build APK
