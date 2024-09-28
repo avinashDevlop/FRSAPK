@@ -58,13 +58,24 @@ jobs:
       - name: Clone python-for-android
         run: |
           mkdir -p $HOME/.buildozer/android/platform
-          git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
+          fi
           cd $HOME/.buildozer/android/platform/python-for-android
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 
           # Set permissions
           chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
+
+      - name: Verify python-for-android Directory
+        run: |
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "Error: python-for-android directory is missing. Cloning may have failed."
+            exit 1
+          else
+            echo "python-for-android directory exists."
+          fi
 
       - name: Initialize Buildozer
         run: |
