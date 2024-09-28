@@ -68,12 +68,11 @@ jobs:
 
       - name: Clone python-for-android
         run: |
+          # Clone python-for-android into the correct directory for Buildozer
           mkdir -p $HOME/.buildozer/android/platform
-          cd $HOME/.buildozer/android/platform
-          git clone https://github.com/kivy/python-for-android.git
-          cd python-for-android
-          git checkout $(git describe --tags --abbrev=0)
-          ls -la  # List contents to verify cloning
+          git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
+          cd $HOME/.buildozer/android/platform/python-for-android
+          git checkout $(git describe --tags --abbrev=0)  # Checkout the latest tag
           cd $GITHUB_WORKSPACE
 
       - name: Initialize Buildozer
@@ -102,18 +101,6 @@ jobs:
             echo "Skipping clean step. python-for-android directory not found."
           fi
         shell: /usr/bin/bash -e {0}
-        env:
-          pythonLocation: /opt/hostedtoolcache/Python/3.9.20/x64
-          PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.9.20/x64/lib/pkgconfig
-          Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.20/x64
-          Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.20/x64
-          Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.20/x64
-          LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.9.20/x64/lib
-          PACKAGES_PATH: /home/runner/.buildozer/android/packages
-          ANDROIDSDK: /home/runner/android-sdk
-          ANDROIDNDK: /home/runner/android-sdk/ndk/25.2.9519653
-          ANDROIDAPI: 31
-          ANDROIDMINAPI: 21
 
       - name: Build APK
         run: |
