@@ -27,7 +27,6 @@ jobs:
           python -m pip install buildozer==1.5.0
           python -m pip install opencv-python-headless
           python -m pip install face_recognition
-
       - name: Set up Android SDK and NDK
         run: |
           echo "sdk.dir=$HOME/android-sdk" > local.properties
@@ -42,7 +41,6 @@ jobs:
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "ndk;25.2.9519653"
-
       - name: Set Environment Variables
         run: |
           echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
@@ -50,14 +48,12 @@ jobs:
           echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
           echo "ANDROIDAPI=31" >> $GITHUB_ENV
           echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
-
       - name: Add Buildozer and Android SDK to PATH
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
-
       - name: Clone python-for-android
         run: |
           mkdir -p $HOME/.buildozer/android/platform
@@ -65,7 +61,7 @@ jobs:
           cd $HOME/.buildozer/android/platform/python-for-android
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
-          
+
           # Verify the directory exists and list its contents
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
             echo "python-for-android directory exists. Contents:"
@@ -75,10 +71,9 @@ jobs:
             ls -al $HOME/.buildozer/android/platform/
             exit 1
           fi
-          
+
           # Set permissions
           chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
-
       - name: Verify python-for-android Directory
         run: |
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
@@ -88,14 +83,11 @@ jobs:
             echo "Error: python-for-android directory is missing."
             ls -al $HOME/.buildozer/android/platform/
             exit 1
-          fi
-
       - name: Initialize Buildozer
         run: |
           if [ ! -f "buildozer.spec" ]; then
             buildozer init
           fi
-
       - name: Modify buildozer.spec for Facial Recognition
         run: |
           sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
@@ -106,11 +98,10 @@ jobs:
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
           echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
           echo "p4a.bootstrap = sdl2" >> buildozer.spec
-          
+
           # Display the contents of buildozer.spec for verification
           echo "Contents of buildozer.spec:"
           cat buildozer.spec
-
       - name: Clean Buildozer
         run: |
           if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
@@ -120,8 +111,6 @@ jobs:
             echo "Skipping clean step. python-for-android directory not found."
             ls -al $HOME/.buildozer/android/platform/
             exit 1
-          fi
-
       - name: Build APK
         run: |
           mkdir -p logs
@@ -131,8 +120,6 @@ jobs:
             echo "Cannot build APK. python-for-android directory is missing."
             ls -al $HOME/.buildozer/android/platform/
             exit 1
-          fi
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
