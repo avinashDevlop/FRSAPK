@@ -34,10 +34,6 @@ jobs:
           python -m pip show python-for-android
           python -m pip show buildozer
 
-      - name: Check for Installed Python-for-Android
-        run: |
-          python -m pip show python-for-android || { echo "python-for-android not installed!"; exit 1; }
-
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
@@ -60,6 +56,15 @@ jobs:
           "extras;android;m2repository" \
           "tools" \
           "ndk;25.2.9519653"
+
+          if [ ! -d "$HOME/android-sdk/build-tools/30.0.3" ]; then
+            echo "Build-tools not found, installation may have failed."
+            exit 1
+          fi
+          if [ ! -d "$HOME/android-sdk/ndk/25.2.9519653" ]; then
+            echo "NDK not found, installation may have failed."
+            exit 1
+          fi
 
       - name: Add Buildozer and Android SDK to PATH
         run: |
@@ -85,14 +90,14 @@ jobs:
         run: |
           buildozer android clean
 
-      - name: Debug: Check for Python-for-Android Directory
-        run: |
-          ls -la ~/.buildozer/android/platform/
-
       - name: Build APK
         run: |
           mkdir -p logs
           buildozer -v android debug --log_level 3 > logs/buildozer_log.txt
+
+      - name: Debug: Check APK Output
+        run: |
+          ls -la ./bin/*.apk
 
       - name: Upload APK as an artifact
         uses: actions/upload-artifact@v4
