@@ -68,10 +68,12 @@ jobs:
 
       - name: Clone python-for-android
         run: |
+          mkdir -p $HOME/.buildozer/android/platform
+          cd $HOME/.buildozer/android/platform
           git clone https://github.com/kivy/python-for-android.git
           cd python-for-android
           git checkout $(git describe --tags --abbrev=0)
-          cd ..
+          cd $GITHUB_WORKSPACE
 
       - name: Initialize Buildozer
         run: |
@@ -88,7 +90,7 @@ jobs:
           sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
           sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
-          echo "p4a.source_dir = $(pwd)/python-for-android" >> buildozer.spec
+          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
 
       - name: Clean Buildozer
         run: |
