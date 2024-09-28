@@ -22,7 +22,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
                                   autoconf automake libtool pkg-config cmake
-
           # Install Cython, OpenCV, face_recognition, and other needed Python packages
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21
@@ -73,7 +72,16 @@ jobs:
           git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
           cd $HOME/.buildozer/android/platform/python-for-android
           git checkout $(git describe --tags --abbrev=0)  # Checkout the latest stable tag
-          cd $GITHUB_WORKSPACE
+
+      - name: Verify python-for-android Cloning
+        run: |
+          if [ -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "python-for-android directory exists."
+          else
+            echo "python-for-android directory is missing."
+            ls -al $HOME/.buildozer/android/platform/
+            exit 1
+          fi
 
       - name: Initialize Buildozer
         run: |
