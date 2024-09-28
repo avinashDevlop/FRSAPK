@@ -72,7 +72,7 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform
           git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
           cd $HOME/.buildozer/android/platform/python-for-android
-          git checkout $(git describe --tags --abbrev=0)  # Checkout the latest tag
+          git checkout $(git describe --tags --abbrev=0)  # Checkout the latest stable tag
           cd $GITHUB_WORKSPACE
 
       - name: Initialize Buildozer
