@@ -1,4 +1,4 @@
-name: Build Kivy Android App
+name: Build FRS Android App
 
 on:
   push:
@@ -20,9 +20,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y python3-pip build-essential git
+        sudo apt install -y python3-pip build-essential libgl1-mesa-glx
         pip install -r requirements.txt
-        pip install kivy buildozer
+        pip install kivy opencv-python face_recognition
+
+    - name: Install Buildozer
+      run: |
+        pip install buildozer
 
     - name: Build APK
       run: |
@@ -31,5 +35,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v2
       with:
-        name: my-app
+        name: FRS-App
         path: ./bin/myapp-0.1-debug.apk
