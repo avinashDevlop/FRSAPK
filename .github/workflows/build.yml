@@ -29,20 +29,18 @@ jobs:
     
     - name: Lint with flake8
       run: |
-        # Exclude the virtual environment and lint the rest of the project
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=myenv
-        # Treat all errors as warnings and set complexity and line length limits
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=myenv
     
     - name: Test with pytest
       run: |
-        pytest
+        pytest tests/  # Ensure tests are inside this directory
 
     - name: Build APK
       uses: digreatbrian/buildozer-action@v2
       with:
         buildozer-cmd: buildozer -v android debug
-        work-dir: . # directory where your main.py file rests
+        work-dir: .  # directory where your main.py file rests
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
