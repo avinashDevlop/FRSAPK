@@ -1,49 +1,51 @@
-name: Build APK and Update README with Blog Posts
+name: Build Kivy App
 
 on:
   push:
-    branches: [ main ]
-  schedule:
-    - cron: '*/5 * * * *' # Scheduled every 5 minutes
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
-        with:
-          buildozer-cmd: buildozer -v android debug
-          work-dir: . # directory where your main.py file rests
+    # Step 2: Set up Python environment
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: package
-          path: ./bin/*.apk
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3-setuptools python3-dev python3-pip build-essential git
+        sudo apt install -y libssl-dev libffi-dev python3-venv
+        python3 -m pip install --upgrade pip
 
-  update-readme-with-blog:
-    name: Update this repo's README with latest blog posts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+    # Step 4: Install Buildozer
+    - name: Install Buildozer
+      run: |
+        python3 -m pip install --user buildozer
+        export PATH=$HOME/.local/bin:$PATH
 
-      - name: Install jq
-        run: sudo apt install -y jq
+    # Step 5: Build Android APK with Buildozer
+    - name: Build APK
+      run: |
+        buildozer init
+        buildozer android debug
 
-      - uses: gautamkrishnar/blog-post-workflow@master
-        with:
-          commit_message: "Updated README with the latest blog posts"
-          feed_list: "https://esteetey.dev/rss.xml"
-          max_post_count: 1000
-          output_only: true
-
-      - name: Saves count as an output
-        id: count-step
-        run: echo "::set-output name=articles_length::$(jq '. | length' /tmp/blog_post_workflow_output.json)"
-
-      - name: Prints count
-        run: echo ${{ steps.count-step.outputs.articles_length }}
+    # Step 6: Upload APK as a build artifact
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-debug.apk
+        path: bin/*.apk
