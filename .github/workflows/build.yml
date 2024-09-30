@@ -1,6 +1,11 @@
+name: Build APK and Update README with Blog Posts
+
 on:
   push:
     branches: [ main ]
+  schedule:
+    - cron: '*/5 * * * *' # Scheduled every 5 minutes
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,15 +25,25 @@ jobs:
           name: package
           path: ./bin/*.apk
 
-      - name: Running Gautam's Blog post workflow 
-        uses: gautamkrishnar/blog-post-workflow@master
-        id: blogpost_workflow
+  update-readme-with-blog:
+    name: Update this repo's README with latest blog posts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install jq
+        run: sudo apt install -y jq
+
+      - uses: gautamkrishnar/blog-post-workflow@master
         with:
-          comment_tag_name: ${{inputs.comment_tag_name}}
-          commit_message: "Updated Badge with latest number of articles"
-          feed_list: ${{inputs.feed_list}}
-          max_post_count: 1000000
+          commit_message: "Updated README with the latest blog posts"
+          feed_list: "https://esteetey.dev/rss.xml"
+          max_post_count: 1000
           output_only: true
 
-      - name: Echo the length
-        run: echo $(jq '. | length' /tmp/blog_post_workflow_output.json)
+      - name: Saves count as an output
+        id: count-step
+        run: echo "::set-output name=articles_length::$(jq '. | length' /tmp/blog_post_workflow_output.json)"
+
+      - name: Prints count
+        run: echo ${{ steps.count-step.outputs.articles_length }}
