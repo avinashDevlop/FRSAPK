@@ -23,7 +23,7 @@ jobs:
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
                                   autoconf automake libtool pkg-config cmake
           python -m pip install --upgrade pip
-          python -m pip install cython==0.29.21 buildozer==1.5.0 opencv-python-headless face_recognition
+          python -m pip install cython==0.29.21 buildozer==1.5.0 opencv-python-headless face_recognition python-for-android
           
       - name: Set up Android SDK and NDK
         run: |
@@ -47,17 +47,20 @@ jobs:
           echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
           echo "ANDROIDAPI=31" >> $GITHUB_ENV
           echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
+
       - name: Add Buildozer and Android SDK to PATH
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
+
       - name: Initialize Buildozer
         run: |
           if [ ! -f "buildozer.spec" ]; then
             buildozer init
           fi
+
       - name: Modify buildozer.spec for Facial Recognition
         run: |
           sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
@@ -69,15 +72,18 @@ jobs:
           echo "p4a.bootstrap = sdl2" >> buildozer.spec
           echo "Contents of buildozer.spec:"
           cat buildozer.spec
+
       - name: Clean Buildozer
         run: |
           echo "Cleaning build with Buildozer."
           buildozer -v android clean || { echo "Clean failed. Exiting."; exit 1; }
+
       - name: Build APK
         run: |
           mkdir -p logs
           echo "Building APK with Buildozer."
           buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
