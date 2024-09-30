@@ -39,7 +39,7 @@ jobs:
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "ndk;25.2.9519653"
-          
+
       - name: Set Environment Variables
         run: |
           echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
@@ -60,6 +60,11 @@ jobs:
           if [ ! -f "buildozer.spec" ]; then
             buildozer init
           fi
+
+      - name: Download python-for-android dependencies
+        run: |
+          buildozer -v android debug || true
+          echo "python-for-android dependencies downloaded."
 
       - name: Modify buildozer.spec for Facial Recognition
         run: |
