@@ -1,39 +1,34 @@
-name: Build FRS Android App
-
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
+      - name: Build APK
+        uses: digreatbrian/buildozer-action@v2
+        with:
+          buildozer-cmd: buildozer -v android debug
+          work-dir: . # directory where your main.py file rests
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y python3-pip build-essential libgl1-mesa-glx
-        pip install -r requirements.txt
-        pip install kivy opencv-python face_recognition
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: ./bin/*.apk
 
-    - name: Install Buildozer
-      run: |
-        pip install buildozer
+      - name: Running Gautam's Blog post workflow 
+        uses: gautamkrishnar/blog-post-workflow@master
+        id: blogpost_workflow
+        with:
+          comment_tag_name: ${{inputs.comment_tag_name}}
+          commit_message: "Updated Badge with latest number of articles"
+          feed_list: ${{inputs.feed_list}}
+          max_post_count: 1000000
+          output_only: true
 
-    - name: Build APK
-      run: |
-        buildozer android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v2
-      with:
-        name: FRS-App
-        path: ./bin/myapp-0.1-debug.apk
+      - name: Echo the length
+        run: echo $(jq '. | length' /tmp/blog_post_workflow_output.json)
