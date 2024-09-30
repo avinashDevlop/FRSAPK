@@ -24,7 +24,7 @@ jobs:
                                   autoconf automake libtool pkg-config cmake
           python -m pip install --upgrade pip
           python -m pip install cython==0.29.21 buildozer==1.5.0 opencv-python-headless face_recognition
-
+          
       - name: Set up Android SDK and NDK
         run: |
           echo "sdk.dir=$HOME/android-sdk" > local.properties
@@ -39,7 +39,7 @@ jobs:
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "ndk;25.2.9519653"
-
+          
       - name: Set Environment Variables
         run: |
           echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
@@ -54,13 +54,13 @@ jobs:
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
-
+          
       - name: Clone python-for-android-new-toolchain
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           if [ ! -d "$HOME/.buildozer/android/platform/python-for-android-new-toolchain" ]; then
             echo "Cloning python-for-android-new-toolchain"
-            git clone https://$GITHUB_TOKEN@github.com/kivy/python-for-android-new-toolchain.git $HOME/.buildozer/android/platform/python-for-android-new-toolchain || { echo "Cloning failed. Exiting."; exit 1; }
+            git clone https://github.com/kivy/python-for-android-new-toolchain.git $HOME/.buildozer/android/platform/python-for-android-new-toolchain || { echo "Cloning failed. Exiting."; exit 1; }
           fi
 
       - name: Verify python-for-android Directory
