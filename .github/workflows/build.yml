@@ -1,53 +1,119 @@
-name: Build Kivy App
+name: Build APK - Facial Recognition System
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the repository (updated to latest version)
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    # Step 2: Set up Python environment (updated to latest version)
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    # Step 3: Install dependencies
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y python3-setuptools python3-dev python3-pip build-essential git
-        sudo apt install -y libssl-dev libffi-dev python3-venv
-        python3 -m pip install --upgrade pip
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
+                                  autoconf automake libtool pkg-config cmake
+          python -m pip install --upgrade pip
+          python -m pip install cython==0.29.21 buildozer==1.5.0 opencv-python-headless face_recognition
 
-    # Step 4: Install Buildozer
-    - name: Install Buildozer
-      run: |
-        python3 -m pip install --user buildozer
-        export PATH=$HOME/.local/bin:$PATH
+      - name: Set up Android SDK and NDK
+        run: |
+          echo "sdk.dir=$HOME/android-sdk" > local.properties
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
+          mv $HOME/android-sdk/cmdline-tools/latest/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+          rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+          "platform-tools" \
+          "platforms;android-31" \
+          "build-tools;30.0.3" \
+          "extras;android;m2repository" \
+          "ndk;25.2.9519653"
 
-    # Step 5: Check for buildozer.spec and build APK
-    - name: Build APK
-      run: |
-        if [ ! -f buildozer.spec ]; then
-          buildozer init
-        fi
-        buildozer android debug
+      - name: Set Environment Variables
+        run: |
+          echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
+          echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROIDAPI=31" >> $GITHUB_ENV
+          echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
 
-    # Step 6: Upload APK as a build artifact using the latest version
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: app-debug.apk
-        path: bin/*.apk
+      - name: Add Buildozer and Android SDK to PATH
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
+
+      - name: Clone python-for-android
+        run: |
+          mkdir -p $HOME/.buildozer/android/platform
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "Cloning python-for-android"
+            git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
+          fi
+          cd $HOME/.buildozer/android/platform/python-for-android
+          git fetch --tags
+          git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
+          chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
+
+      - name: Verify python-for-android Directory
+        run: |
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
+            echo "Error: python-for-android directory is missing. Cloning may have failed."
+            exit 1
+          else
+            echo "python-for-android directory exists."
+          fi
+
+      - name: Initialize Buildozer
+        run: |
+          if [ ! -f "buildozer.spec" ]; then
+            buildozer init
+          fi
+
+      - name: Modify buildozer.spec for Facial Recognition
+        run: |
+          sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
+          sed -i 's/^# \(android.permissions = CAMERA\)/\1/' buildozer.spec
+          sed -i 's/^# \(android.permissions = WRITE_EXTERNAL_STORAGE\)/\1/' buildozer.spec
+          sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
+          sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
+          sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
+          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
+          echo "p4a.bootstrap = sdl2" >> buildozer.spec
+          echo "Contents of buildozer.spec:"
+          cat buildozer.spec
+
+      - name: Clean Buildozer
+        run: |
+          echo "Cleaning build with Buildozer."
+          buildozer -v android clean || { echo "Clean failed. Exiting."; exit 1; }
+
+      - name: Build APK
+        run: |
+          mkdir -p logs
+          echo "Building APK with Buildozer."
+          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: facial_recognition_apk
+          path: ./bin/*.apk
+
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_logs
+          path: logs/buildozer_log.txt
