@@ -54,23 +54,6 @@ jobs:
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
-          
-      - name: Clone python-for-android-new-toolchain
-        run: |
-          mkdir -p $HOME/.buildozer/android/platform
-          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android-new-toolchain" ]; then
-            echo "Cloning python-for-android-new-toolchain"
-            git clone https://github.com/kivy/python-for-android-new-toolchain.git $HOME/.buildozer/android/platform/python-for-android-new-toolchain || { echo "Cloning failed. Exiting."; exit 1; }
-          fi
-
-      - name: Verify python-for-android Directory
-        run: |
-          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android-new-toolchain" ]; then
-            echo "Error: python-for-android-new-toolchain directory is missing. Cloning may have failed."
-            exit 1
-          else
-            echo "python-for-android-new-toolchain directory exists."
-          fi
 
       - name: Initialize Buildozer
         run: |
