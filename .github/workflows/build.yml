@@ -60,11 +60,11 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform
           if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
             echo "Cloning python-for-android"
-            git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android
+            git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android || { echo "Cloning failed. Exiting."; exit 1; }
           fi
           cd $HOME/.buildozer/android/platform/python-for-android
           git fetch --tags
-          git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
+          git checkout $(git describe --tags `git rev-list --tags --max-count=1`) || { echo "Checkout failed. Exiting."; exit 1; }
           chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
 
       - name: Verify python-for-android Directory
