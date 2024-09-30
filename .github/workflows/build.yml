@@ -60,12 +60,8 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform
           if [ ! -d "$HOME/.buildozer/android/platform/python-for-android-new-toolchain" ]; then
             echo "Cloning python-for-android-new-toolchain"
-            git clone https://github.com/kivy/python-for-android-new-toolchain.git $HOME/.buildozer/android/platform/python-for-android-new-toolchain || { echo "Cloning failed. Exiting."; exit 1; }
+            git clone https://$GITHUB_TOKEN@github.com/kivy/python-for-android-new-toolchain.git $HOME/.buildozer/android/platform/python-for-android-new-toolchain || { echo "Cloning failed. Exiting."; exit 1; }
           fi
-          cd $HOME/.buildozer/android/platform/python-for-android-new-toolchain
-          git fetch --tags
-          git checkout $(git describe --tags `git rev-list --tags --max-count=1`) || { echo "Checkout failed. Exiting."; exit 1; }
-          chmod -R 755 $HOME/.buildozer/android/platform/python-for-android-new-toolchain
 
       - name: Verify python-for-android Directory
         run: |
@@ -74,7 +70,6 @@ jobs:
             exit 1
           else
             echo "python-for-android-new-toolchain directory exists."
-            ls -l $HOME/.buildozer/android/platform/python-for-android-new-toolchain  # List files in the directory
           fi
 
       - name: Initialize Buildozer
