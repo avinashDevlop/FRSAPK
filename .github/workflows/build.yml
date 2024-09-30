@@ -37,10 +37,12 @@ jobs:
         python3 -m pip install --user buildozer
         export PATH=$HOME/.local/bin:$PATH
 
-    # Step 5: Build Android APK with Buildozer
+    # Step 5: Check for buildozer.spec and build APK
     - name: Build APK
       run: |
-        buildozer init
+        if [ ! -f buildozer.spec ]; then
+          buildozer init
+        fi
         buildozer android debug
 
     # Step 6: Upload APK as a build artifact using the latest version
