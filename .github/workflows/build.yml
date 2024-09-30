@@ -55,25 +55,26 @@ jobs:
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
 
-      - name: Clone python-for-android
+      - name: Clone python-for-android-new-toolchain
         run: |
           mkdir -p $HOME/.buildozer/android/platform
-          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            echo "Cloning python-for-android"
-            git clone https://github.com/kivy/python-for-android.git $HOME/.buildozer/android/platform/python-for-android || { echo "Cloning failed. Exiting."; exit 1; }
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android-new-toolchain" ]; then
+            echo "Cloning python-for-android-new-toolchain"
+            git clone https://github.com/kivy/python-for-android-new-toolchain.git $HOME/.buildozer/android/platform/python-for-android-new-toolchain || { echo "Cloning failed. Exiting."; exit 1; }
           fi
-          cd $HOME/.buildozer/android/platform/python-for-android
+          cd $HOME/.buildozer/android/platform/python-for-android-new-toolchain
           git fetch --tags
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`) || { echo "Checkout failed. Exiting."; exit 1; }
-          chmod -R 755 $HOME/.buildozer/android/platform/python-for-android
+          chmod -R 755 $HOME/.buildozer/android/platform/python-for-android-new-toolchain
 
       - name: Verify python-for-android Directory
         run: |
-          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android" ]; then
-            echo "Error: python-for-android directory is missing. Cloning may have failed."
+          if [ ! -d "$HOME/.buildozer/android/platform/python-for-android-new-toolchain" ]; then
+            echo "Error: python-for-android-new-toolchain directory is missing. Cloning may have failed."
             exit 1
           else
-            echo "python-for-android directory exists."
+            echo "python-for-android-new-toolchain directory exists."
+            ls -l $HOME/.buildozer/android/platform/python-for-android-new-toolchain  # List files in the directory
           fi
 
       - name: Initialize Buildozer
@@ -90,7 +91,7 @@ jobs:
           sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
           sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
           sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
-          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android" >> buildozer.spec
+          echo "p4a.source_dir = $HOME/.buildozer/android/platform/python-for-android-new-toolchain" >> buildozer.spec
           echo "p4a.bootstrap = sdl2" >> buildozer.spec
           echo "Contents of buildozer.spec:"
           cat buildozer.spec
