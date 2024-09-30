@@ -43,9 +43,9 @@ jobs:
         buildozer init
         buildozer android debug
 
-    # Step 6: Upload APK as a build artifact
+    # Step 6: Upload APK as a build artifact using the latest version
     - name: Upload APK
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: app-debug.apk
         path: bin/*.apk
