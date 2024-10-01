@@ -30,12 +30,16 @@ jobs:
 
       - name: Set up Android SDK and NDK
         run: |
-          echo "y" | sudo /usr/local/lib/android/sdk/tools/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-31" "ndk;25.2.9519653"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "build-tools;30.0.3" \
+            "platforms;android-31" \
+            "ndk;25.2.9519653"
       
       - name: Set Environment Variables
         run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Configure buildozer.spec
         run: |
@@ -56,8 +60,8 @@ jobs:
           android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE
           android.api = 31
           android.minapi = 21
-          android.ndk_path = /usr/local/lib/android/sdk/ndk/25.2.9519653
-          android.sdk_path = /usr/local/lib/android/sdk
+          android.ndk_path = $ANDROID_NDK_HOME
+          android.sdk_path = $ANDROID_HOME
           android.gradle_dependencies = org.tensorflow:tensorflow-lite-support:0.3.0,org.tensorflow:tensorflow-lite-metadata:0.3.0
           p4a.branch = master
           p4a.bootstrap = sdl2
