@@ -20,11 +20,14 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 aidl \
-                                  autoconf automake libtool pkg-config cmake
+          sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 \
+                                  autoconf automake libtool pkg-config cmake \
+                                  libffi-dev libssl-dev
           python -m pip install --upgrade pip
-          python -m pip install cython==0.29.21 buildozer==1.5.0 opencv-python-headless face_recognition python-for-android
-          
+          pip install --upgrade Cython==0.29.21
+          pip install buildozer==1.5.0
+          pip install --no-cache-dir kivy==2.3.0
+
       - name: Set up Android SDK and NDK
         run: |
           echo "sdk.dir=$HOME/android-sdk" > local.properties
@@ -37,7 +40,6 @@ jobs:
           "platform-tools" \
           "platforms;android-31" \
           "build-tools;30.0.3" \
-          "extras;android;m2repository" \
           "ndk;25.2.9519653"
       
       - name: Set Environment Variables
@@ -48,12 +50,11 @@ jobs:
           echo "ANDROIDAPI=31" >> $GITHUB_ENV
           echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
 
-      - name: Add Buildozer and Android SDK to PATH
+      - name: Add Build Tools to PATH
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_PATH
 
       - name: Initialize Buildozer
         run: |
@@ -61,47 +62,49 @@ jobs:
             buildozer init
           fi
 
-      - name: Modify buildozer.spec for Facial Recognition
+      - name: Configure buildozer.spec
         run: |
-          sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
-          sed -i 's/^# \(android.permissions = CAMERA\)/\1/' buildozer.spec
-          sed -i 's/^# \(android.permissions = WRITE_EXTERNAL_STORAGE\)/\1/' buildozer.spec
-          sed -i 's/^# \(android.api =\).*/\1 31/' buildozer.spec
-          sed -i 's/^# \(android.minapi =\).*/\1 21/' buildozer.spec
-          sed -i 's/^# \(requirements = python3\)/\1,kivy,opencv-python,face_recognition/' buildozer.spec
-          echo "p4a.bootstrap = sdl2" >> buildozer.spec
-          echo "Contents of buildozer.spec:"
-          cat buildozer.spec
-
-      - name: Download python-for-android dependencies
-        run: |
-          echo "Downloading python-for-android dependencies."
-          buildozer -v android update || true
-
-      - name: Clean Buildozer
-        run: |
-          echo "Cleaning build with Buildozer."
-          buildozer -v android clean || { echo "Clean failed. Exiting."; exit 1; }
+          cat > buildozer.spec << EOF
+          [app]
+          title = Facial Recognition System
+          package.name = facialrecognition
+          package.domain = org.test
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas
+          version = 0.1
+          requirements = python3,kivy==2.3.0,pillow,numpy,opencv-python-headless
+          orientation = portrait
+          osx.python_version = 3
+          osx.kivy_version = 2.3.0
+          fullscreen = 0
+          android.archs = arm64-v8a, armeabi-v7a
+          android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE
+          android.api = 31
+          android.minapi = 21
+          android.ndk = 25.2.9519653
+          android.sdk = 31
+          android.gradle_dependencies = org.tensorflow:tensorflow-lite-support:0.3.0,org.tensorflow:tensorflow-lite-metadata:0.3.0
+          p4a.branch = master
+          p4a.bootstrap = sdl2
+          
+          [buildozer]
+          log_level = 2
+          warn_on_root = 1
+          EOF
 
       - name: Build APK
         run: |
-          mkdir -p logs
-          echo "Building APK with Buildozer."
-          buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
-
-      - name: Upload Build Logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: build_logs
-          path: logs/buildozer_log.txt
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: facial_recognition_apk
-          path: ./bin/*.apk
+          path: bin/*.apk
 
-      - name: Debug Build Logs
-        run: |
-          echo "Showing the last 100 lines of the build log to identify the error:"
-          tail -n 100 logs/buildozer_log.txt
+      - name: Upload Build Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_logs
+          path: .buildozer/logs/buildozer.log
