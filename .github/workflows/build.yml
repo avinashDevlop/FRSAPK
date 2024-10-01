@@ -12,6 +12,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
       
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -27,7 +33,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip openjdk-11-jdk python3-pip \
+            git zip unzip python3-pip \
             autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev \
             libgl1 libgles2 mecab-ipadic-utf8
@@ -42,11 +48,12 @@ jobs:
         uses: android-actions/setup-android@v3
         
       - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
         
       - name: Install Android SDK components
         run: |
-          sdkmanager "platforms;android-31" "build-tools;30.0.3" "ndk;25.2.9519653"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;30.0.3" "ndk;25.2.9519653"
           
       - name: Create buildozer.spec
         run: |
@@ -90,7 +97,7 @@ jobs:
           
       - name: Build APK
         run: |
-          export PATH=$PATH:$ANDROID_HOME/tools/bin
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           buildozer android debug
         
       - name: Upload APK
