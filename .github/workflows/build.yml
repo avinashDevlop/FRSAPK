@@ -31,7 +31,8 @@ jobs:
         pip install python-for-android
 
     - name: Build APK
-      run: buildozer -v android debug
+      run: |
+        buildozer -v android debug || (tail -n 50 buildozer-android-*.log; exit 1)
 
     - name: Upload APK
       uses: actions/upload-artifact@v3  # Updated to v3
