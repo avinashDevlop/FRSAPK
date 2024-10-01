@@ -23,44 +23,19 @@ jobs:
           sudo apt-get install -y openjdk-11-jdk unzip build-essential libstdc++6 \
                                   autoconf automake libtool pkg-config cmake \
                                   libffi-dev libssl-dev
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip wheel
           pip install --upgrade Cython==0.29.21
           pip install buildozer==1.5.0
           pip install --no-cache-dir kivy==2.3.0
 
       - name: Set up Android SDK and NDK
         run: |
-          echo "sdk.dir=$HOME/android-sdk" > local.properties
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
-          mv $HOME/android-sdk/cmdline-tools/latest/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
-          rmdir $HOME/android-sdk/cmdline-tools/latest/cmdline-tools
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
-          "platform-tools" \
-          "platforms;android-31" \
-          "build-tools;30.0.3" \
-          "ndk;25.2.9519653"
+          echo "y" | sudo /usr/local/lib/android/sdk/tools/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-31" "ndk;25.2.9519653"
       
       - name: Set Environment Variables
         run: |
-          echo "PACKAGES_PATH=$HOME/.buildozer/android/packages" >> $GITHUB_ENV
-          echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
-          echo "ANDROIDAPI=31" >> $GITHUB_ENV
-          echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
-
-      - name: Add Build Tools to PATH
-        run: |
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-      - name: Initialize Buildozer
-        run: |
-          if [ ! -f "buildozer.spec" ]; then
-            buildozer init
-          fi
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Configure buildozer.spec
         run: |
@@ -81,8 +56,8 @@ jobs:
           android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE
           android.api = 31
           android.minapi = 21
-          android.ndk = 25.2.9519653
-          android.sdk = 31
+          android.ndk_path = /usr/local/lib/android/sdk/ndk/25.2.9519653
+          android.sdk_path = /usr/local/lib/android/sdk
           android.gradle_dependencies = org.tensorflow:tensorflow-lite-support:0.3.0,org.tensorflow:tensorflow-lite-metadata:0.3.0
           p4a.branch = master
           p4a.bootstrap = sdl2
@@ -90,6 +65,20 @@ jobs:
           [buildozer]
           log_level = 2
           warn_on_root = 1
+          EOF
+
+      - name: Create main.py
+        run: |
+          cat > main.py << EOF
+          from kivy.app import App
+          from kivy.uix.button import Button
+
+          class FacialRecognitionApp(App):
+              def build(self):
+                  return Button(text='Hello World')
+
+          if __name__ == '__main__':
+              FacialRecognitionApp().run()
           EOF
 
       - name: Build APK
