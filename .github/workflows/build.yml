@@ -1,41 +1,43 @@
-name: Build Android APK
+name: Build Android App
 
 on:
   push:
     branches:
-      - main
+      - main  # Change this to your default branch
+  pull_request:
+    branches:
+      - main  # Change this to your default branch
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libffi-dev libssl-dev \
-            build-essential python3-dev python3-venv \
-            autoconf automake libtool pkg-config zlib1g-dev \
-            libsqlite3-dev curl unzip openjdk-8-jdk
-        python -m pip install --upgrade pip
-        pip install cython==0.29.19  # Install Cython via pip
-        pip install buildozer
-        pip install python-for-android
+      - name: Install Buildozer
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip python3-setuptools git
+          pip3 install buildozer
 
-    - name: Build APK
-      run: |
-        buildozer -v android debug || (tail -n 50 buildozer-android-*.log; exit 1)
+      - name: Install Android dependencies
+        run: |
+          sudo apt install -y unzip
+          buildozer android update
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3  # Updated to v3
-      with:
-        name: app-release.apk
-        path: ./bin/*
+      - name: Build the Android package
+        run: |
+          buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: MyApp.apk
+          path: bin/*.apk  # Adjust if necessary to your APK output path
