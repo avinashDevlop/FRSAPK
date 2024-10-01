@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -47,13 +49,19 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         
+      - name: Print Android SDK and NDK paths
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
+          ls -la $ANDROID_NDK_HOME || echo "NDK directory not found"
+          
       - name: Accept Android SDK Licenses
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
         
       - name: Install Android SDK components
         run: |
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;30.0.3" "ndk;25.2.9519653"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;30.0.3"
           
       - name: Create buildozer.spec
         run: |
@@ -65,24 +73,16 @@ jobs:
           source.dir = .
           source.include_exts = py,png,jpg,kv,atlas,ttf
           version = 0.1
-          requirements = python3,\
-              kivy==2.2.1,\
-              pillow,\
-              numpy,\
-              opencv-python,\
-              plyer,\
-              android
+          requirements = python3,kivy==2.2.1,pillow,numpy,opencv-python,plyer,android
           
           orientation = portrait
-          osx.python_version = 3
-          osx.kivy_version = 2.2.1
           fullscreen = 0
           android.archs = arm64-v8a, armeabi-v7a
           android.allow_backup = True
           android.api = 31
           android.minapi = 21
-          android.ndk = 25.2.9519653
-          android.sdk = 31
+          android.ndk_path = /usr/local/lib/android/sdk/ndk/25.2.9519653
+          android.sdk_path = /usr/local/lib/android/sdk
           android.accept_sdk_license = True
           android.gradle_dependencies = org.tensorflow:tensorflow-lite-support:0.3.0,org.tensorflow:tensorflow-lite-metadata:0.3.0
           android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
@@ -98,6 +98,7 @@ jobs:
       - name: Build APK
         run: |
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653
           buildozer android debug
         
       - name: Upload APK
