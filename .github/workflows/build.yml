@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: '3.x'
       
+      - name: Enable i386 architecture
+        run: sudo dpkg --add-architecture i386
+      
       - name: Install Buildozer dependencies
         run: |
           sudo apt update
@@ -32,10 +35,9 @@ jobs:
             libpangox-1.0-0:i386 \
             libpangoxft-1.0-0:i386 \
             libidn11:i386 \
-            python3-pip \
-            openjdk-11-jdk \
             zlib1g:i386 \
             libltdl-dev \
+            openjdk-11-jdk \
             git
 
       - name: Install Buildozer and Cython
