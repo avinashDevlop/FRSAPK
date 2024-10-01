@@ -1,46 +1,55 @@
-name: CI
+name: Build Kivy APK
+
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 0 1,15 * *'
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-
-      # used to cache dependencies with a timeout
-      - name: Get Date
-        id: get-date
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Install Buildozer dependencies
         run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
-        shell: bash
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            ccache \
+            libncurses5:i386 \
+            libstdc++6:i386 \
+            libgtk2.0-0:i386 \
+            libpangox-1.0-0:i386 \
+            libpangoxft-1.0-0:i386 \
+            libidn11:i386 \
+            python3-pip \
+            openjdk-11-jdk \
+            zlib1g:i386 \
+            libltdl-dev \
+            git
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v2
-        with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
-
-      - uses: actions/cache@v2
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
-
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          buildozer_version: master
-
-      - name: Upload artifacts
+      - name: Install Buildozer and Cython
+        run: |
+          pip install --upgrade Cython==0.29.36
+          pip install --upgrade buildozer
+      
+      - name: Build APK
+        run: |
+          buildozer android debug
+          ls ./bin
+      
+      - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
-          name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          name: FRS-app
+          path: bin/*.apk
