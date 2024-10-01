@@ -19,10 +19,15 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
+
+      - name: Install dependencies for distutils
+        run: |
+          python -m ensurepip --upgrade
+          pip install --upgrade setuptools
       
       - name: Enable i386 architecture
         run: sudo dpkg --add-architecture i386
-      
+
       - name: Install Buildozer dependencies
         run: |
           sudo apt update
