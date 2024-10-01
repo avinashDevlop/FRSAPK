@@ -1,22 +1,19 @@
 name: Build APK - Facial Recognition System
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Java 8
+      - name: Set up Java 11
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '11'
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -34,28 +31,18 @@ jobs:
           pip install buildozer==1.5.0
           pip install --no-cache-dir kivy==2.3.0
 
-      - name: Download Android SDK
-        run: |
-          wget https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip
-          unzip commandlinetools-linux-6858069_latest.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          mv cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
-          rm -rf cmdline-tools
-
       - name: Setup Android SDK
-        env:
-          ANDROID_HOME: ${{ github.workspace }}/android-sdk
+        uses: android-actions/setup-android@v2
+
+      - name: Install Android SDK components
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
-            "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;30.0.3" \
-            "ndk;25.2.9519653"
-      
+          sdkmanager --install "platform-tools" "platforms;android-31" "build-tools;30.0.3" "ndk;25.2.9519653"
+          echo "y" | sdkmanager --licenses
+
       - name: Set Environment Variables
         run: |
-          echo "ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Configure buildozer.spec
         run: |
@@ -76,8 +63,8 @@ jobs:
           android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE
           android.api = 31
           android.minapi = 21
-          android.ndk_path = $GITHUB_WORKSPACE/android-sdk/ndk/25.2.9519653
-          android.sdk_path = $GITHUB_WORKSPACE/android-sdk
+          android.ndk_path = $ANDROID_NDK_HOME
+          android.sdk_path = $ANDROID_HOME
           android.accept_sdk_license = True
           android.gradle_dependencies = org.tensorflow:tensorflow-lite-support:0.3.0,org.tensorflow:tensorflow-lite-metadata:0.3.0
           p4a.branch = master
@@ -93,11 +80,9 @@ jobs:
           cat > main.py << EOF
           from kivy.app import App
           from kivy.uix.button import Button
-
           class FacialRecognitionApp(App):
               def build(self):
                   return Button(text='Hello World')
-
           if __name__ == '__main__':
               FacialRecognitionApp().run()
           EOF
