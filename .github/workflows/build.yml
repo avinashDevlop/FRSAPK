@@ -39,7 +39,7 @@ jobs:
           "build-tools;30.0.3" \
           "extras;android;m2repository" \
           "ndk;25.2.9519653"
-
+      
       - name: Set Environment Variables
         run: |
           echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
@@ -72,6 +72,11 @@ jobs:
           echo "p4a.bootstrap = sdl2" >> buildozer.spec
           echo "Contents of buildozer.spec:"
           cat buildozer.spec
+
+      - name: Download python-for-android dependencies
+        run: |
+          echo "Downloading python-for-android dependencies."
+          buildozer -v android update || true
 
       - name: Clean Buildozer
         run: |
