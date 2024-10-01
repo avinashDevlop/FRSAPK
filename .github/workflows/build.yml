@@ -42,7 +42,7 @@ jobs:
       
       - name: Set Environment Variables
         run: |
-          echo "PACKAGES_PATH=/home/runner/.buildozer/android/packages" >> $GITHUB_ENV
+          echo "PACKAGES_PATH=$HOME/.buildozer/android/packages" >> $GITHUB_ENV
           echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
           echo "ANDROIDAPI=31" >> $GITHUB_ENV
@@ -89,17 +89,17 @@ jobs:
           echo "Building APK with Buildozer."
           buildozer -v android debug --log_level 2 > logs/buildozer_log.txt || { echo "Build failed. Exiting."; cat logs/buildozer_log.txt; exit 1; }
 
+      - name: Upload Build Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_logs
+          path: logs/buildozer_log.txt
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: facial_recognition_apk
           path: ./bin/*.apk
-
-      - name: Upload Logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: build_logs
-          path: logs/buildozer_log.txt
 
       - name: Debug Build Logs
         run: |
