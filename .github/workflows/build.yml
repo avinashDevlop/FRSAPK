@@ -61,11 +61,6 @@ jobs:
             buildozer init
           fi
 
-      - name: Download python-for-android dependencies
-        run: |
-          buildozer -v android debug || true
-          echo "python-for-android dependencies downloaded."
-
       - name: Modify buildozer.spec for Facial Recognition
         run: |
           sed -i 's/^# \(android.permissions = INTERNET\)/\1/' buildozer.spec
@@ -100,3 +95,8 @@ jobs:
         with:
           name: build_logs
           path: logs/buildozer_log.txt
+
+      - name: Debug Build Logs
+        run: |
+          echo "Showing the last 100 lines of the build log to identify the error:"
+          tail -n 100 logs/buildozer_log.txt
