@@ -7,3 +7,10 @@ opencv-python
 face_recognition
 tensorflow
 requests
+python-for-android
+Pillow
+pyjnius
+android
+openssl
+setuptools
+six
