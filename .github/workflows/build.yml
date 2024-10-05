@@ -13,14 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Step 2: Set up Python 3.8
       - name: Set up Python 3.8
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
+      # Step 3: Install system dependencies and Buildozer
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -28,17 +31,23 @@ jobs:
           python3 -m pip install --upgrade pip virtualenv
           python3 -m pip install buildozer cython==0.29.36
 
+      # Step 4: Install Android SDK, NDK, and other required tools
       - name: Install Android SDK, NDK, and Build Tools
         run: |
           sudo apt-get install -y openjdk-11-jdk
           sudo apt-get install -y android-sdk
           sudo apt-get install -y android-sdk-platform-tools
+          
+          # Download Android SDK command line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           mkdir -p $HOME/cmdline-tools
           unzip commandlinetools-linux-9477386_latest.zip -d $HOME/cmdline-tools
+          
+          # Accept licenses and install required Android SDK components
           yes | $HOME/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
           $HOME/cmdline-tools/cmdline-tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
 
+      # Step 5: Create a virtual environment, install Python dependencies, and build the APK
       - name: Build APK with Buildozer
         run: |
           virtualenv venv
@@ -47,9 +56,10 @@ jobs:
           buildozer android debug
         env:
           ANDROID_HOME: $HOME/cmdline-tools
-          ANDROID_NDK_HOME: $HOME/android-ndk-r25b
+          ANDROID_NDK_HOME: $HOME/cmdline-tools/ndk/25.2.9519653
           JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
+      # Step 6: Upload the generated APK as a build artifact
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v3
         with:
