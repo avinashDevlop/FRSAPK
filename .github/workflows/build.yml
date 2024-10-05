@@ -31,21 +31,21 @@ jobs:
           python3 -m pip install --upgrade pip virtualenv
           python3 -m pip install buildozer cython==0.29.36
 
-      # Step 4: Install Android SDK, NDK, and other required tools
+      # Step 4: Install Android SDK, NDK, and Build Tools
       - name: Install Android SDK, NDK, and Build Tools
         run: |
           sudo apt-get install -y openjdk-11-jdk
-          sudo apt-get install -y android-sdk
-          sudo apt-get install -y android-sdk-platform-tools
-          
-          # Download Android SDK command line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          mkdir -p $HOME/cmdline-tools
-          unzip commandlinetools-linux-9477386_latest.zip -d $HOME/cmdline-tools
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          unzip -q commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk/cmdline-tools
+          
+          # Set up Android SDK
+          echo "export ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "export PATH=$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
           
           # Accept licenses and install required Android SDK components
-          yes | $HOME/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
-          $HOME/cmdline-tools/cmdline-tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
+          yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --licenses
+          $HOME/android-sdk/cmdline-tools/bin/sdkmanager --install "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
 
       # Step 5: Create a virtual environment, install Python dependencies, and build the APK
       - name: Build APK with Buildozer
@@ -53,10 +53,10 @@ jobs:
           virtualenv venv
           source venv/bin/activate
           pip install -r requirements.txt
-          buildozer -v android debug > build_logs.txt 2>&1 || cat build_logs.txt && exit 1
+          buildozer -v android debug > build_logs.txt 2>&1 || { cat build_logs.txt; exit 1; }
         env:
-          ANDROID_HOME: $HOME/cmdline-tools
-          ANDROID_NDK_HOME: $HOME/cmdline-tools/ndk/25.2.9519653
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_NDK_HOME: $HOME/android-sdk/ndk/25.2.9519653
           JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
       # Step 6: Upload the generated APK as a build artifact
