@@ -65,4 +65,4 @@ jobs:
         with:
           name: FRS-APK
           path: |
-            ./*.apk
+            ./bin/*.apk  # Adjust the path if your APK is generated elsewhere
