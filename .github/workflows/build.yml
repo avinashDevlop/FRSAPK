@@ -53,20 +53,15 @@ jobs:
           virtualenv venv
           source venv/bin/activate
           pip install -r requirements.txt
-          buildozer -v android debug > build_logs.txt 2>&1
+          buildozer -v android debug > build_logs.txt 2>&1 || cat build_logs.txt && exit 1
         env:
           ANDROID_HOME: $HOME/cmdline-tools
           ANDROID_NDK_HOME: $HOME/cmdline-tools/ndk/25.2.9519653
           JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
-      # Step 6: Check build logs for errors
-      - name: Check build logs
-        run: |
-          cat build_logs.txt
-          
-      # Step 7: Upload the generated APK as a build artifact
+      # Step 6: Upload the generated APK as a build artifact
       - name: Upload APK as artifact
-        uses: actions/upload-artifact@v3  # Updated to v3
+        uses: actions/upload-artifact@v3
         with:
           name: FRS-APK
           path: |
