@@ -1,0 +1,9 @@
+kivy==2.2.1
+kivyMD==1.2.0
+cython==0.29.36
+twilio
+firebase_admin
+opencv-python
+face_recognition
+tensorflow
+requests
