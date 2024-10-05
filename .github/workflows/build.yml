@@ -1,12 +1,12 @@
-name: Build Android App
+name: Build Kivy APK
 
 on:
   push:
     branches:
-      - main  # Change this to your default branch
+      - main
   pull_request:
     branches:
-      - main  # Change this to your default branch
+      - main
 
 jobs:
   build:
@@ -16,28 +16,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up JDK
-        uses: actions/setup-java@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
         with:
-          java-version: '11'
+          python-version: '3.8'
 
-      - name: Install Buildozer
+      - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-setuptools git
-          pip3 install buildozer
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libffi-dev python3-dev python3-setuptools python3-venv git zip unzip
+          python3 -m pip install --upgrade pip virtualenv
+          python3 -m pip install buildozer cython==0.29.36
 
-      - name: Install Android dependencies
+      - name: Install Android SDK, NDK, and Build Tools
         run: |
-          sudo apt install -y unzip
-          buildozer android update
+          sudo apt-get install -y openjdk-11-jdk
+          sudo apt-get install -y android-sdk
+          sudo apt-get install -y android-sdk-platform-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          mkdir -p $HOME/cmdline-tools
+          unzip commandlinetools-linux-9477386_latest.zip -d $HOME/cmdline-tools
+          yes | $HOME/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
+          $HOME/cmdline-tools/cmdline-tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
 
-      - name: Build the Android package
+      - name: Build APK with Buildozer
         run: |
-          buildozer -v android debug
+          virtualenv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          buildozer android debug
+        env:
+          ANDROID_HOME: $HOME/cmdline-tools
+          ANDROID_NDK_HOME: $HOME/android-ndk-r25b
+          JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v2
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: MyApp.apk
-          path: bin/*.apk  # Adjust if necessary to your APK output path
+          name: FRS-APK
+          path: |
+            ./*.apk
