@@ -36,16 +36,16 @@ jobs:
         run: |
           sudo apt-get install -y openjdk-11-jdk
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          unzip -q commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk/cmdline-tools
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          unzip -q commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk/cmdline-tools/latest
           
           # Set up Android SDK
           echo "export ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+          echo "export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
           
           # Accept licenses and install required Android SDK components
-          yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --licenses
-          $HOME/android-sdk/cmdline-tools/bin/sdkmanager --install "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
 
       # Step 5: Create a virtual environment, install Python dependencies, and build the APK
       - name: Build APK with Buildozer
