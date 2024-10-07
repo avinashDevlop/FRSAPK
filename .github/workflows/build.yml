@@ -35,11 +35,16 @@ jobs:
       - name: Install Android SDK, NDK, and Build Tools
         run: |
           sudo apt-get install -y openjdk-11-jdk
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          unzip -q commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk/cmdline-tools/latest
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
           
-          # Set up Android SDK
+          # Fix: Create the directory and unzip command-line tools
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          unzip -q commandlinetools.zip -d $HOME/android-sdk/cmdline-tools
+          
+          # Fix: Move command-line tools into the correct structure
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+
+          # Set up Android SDK environment variables
           echo "export ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
           
