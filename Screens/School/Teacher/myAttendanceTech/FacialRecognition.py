@@ -18,7 +18,6 @@ from firebase_admin import credentials, initialize_app, storage, db
 import cv2
 import numpy as np
 from PIL import Image as PILImage
-import tensorflow as tf
 import os
 import requests
 from io import BytesIO
